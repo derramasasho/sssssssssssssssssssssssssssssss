@@ -1,13 +1,13 @@
 import OpenAI from 'openai';
-import { 
-  AIMessage, 
-  AIAnalysis, 
-  AIRecommendation, 
-  Portfolio, 
-  PortfolioPosition, 
+import {
+  AIMessage,
+  AIAnalysis,
+  AIRecommendation,
+  Portfolio,
+  PortfolioPosition,
   Token,
   MarketData,
-  ApiResponse 
+  ApiResponse,
 } from '@/types';
 import { formatCurrency, formatPercentage } from '@/utils/format';
 
@@ -39,11 +39,14 @@ export class AIService {
   // PORTFOLIO ANALYSIS
   // ==========================================================================
 
-  async analyzePortfolio(portfolio: Portfolio, marketData: MarketData[]): Promise<AIAnalysis> {
+  async analyzePortfolio(
+    portfolio: Portfolio,
+    marketData: MarketData[]
+  ): Promise<AIAnalysis> {
     try {
       const portfolioSummary = this.createPortfolioSummary(portfolio);
       const marketSummary = this.createMarketSummary(marketData);
-      
+
       const prompt = `
         As a DeFi portfolio analyst, analyze this portfolio and provide insights:
         
@@ -64,24 +67,25 @@ export class AIService {
       `;
 
       const completion = await openai.chat.completions.create({
-        model: "gpt-4-turbo-preview",
+        model: 'gpt-4-turbo-preview',
         messages: [
           {
-            role: "system",
-            content: "You are an expert DeFi portfolio analyst with deep knowledge of cryptocurrency markets, DeFi protocols, and risk management. Provide precise, actionable analysis."
+            role: 'system',
+            content:
+              'You are an expert DeFi portfolio analyst with deep knowledge of cryptocurrency markets, DeFi protocols, and risk management. Provide precise, actionable analysis.',
           },
           {
-            role: "user",
-            content: prompt
-          }
+            role: 'user',
+            content: prompt,
+          },
         ],
         temperature: 0.3,
         max_tokens: 1000,
       });
 
-      const analysisContent = completion.choices[0]?.message?.content || "";
+      const analysisContent = completion.choices[0]?.message?.content || '';
       const insights = this.extractInsights(analysisContent);
-      
+
       return {
         id: `analysis_${Date.now()}`,
         type: 'portfolio',
@@ -103,14 +107,14 @@ export class AIService {
   // ==========================================================================
 
   async generateTradingRecommendations(
-    portfolio: Portfolio, 
+    portfolio: Portfolio,
     marketData: MarketData[],
     userQuery?: string
   ): Promise<AIRecommendation[]> {
     try {
       const portfolioSummary = this.createPortfolioSummary(portfolio);
       const marketSummary = this.createMarketSummary(marketData);
-      
+
       const prompt = `
         Based on this portfolio and current market conditions, suggest specific trading actions:
         
@@ -129,22 +133,23 @@ export class AIService {
       `;
 
       const completion = await openai.chat.completions.create({
-        model: "gpt-4-turbo-preview",
+        model: 'gpt-4-turbo-preview',
         messages: [
           {
-            role: "system",
-            content: "You are a DeFi trading advisor. Provide specific, actionable trading recommendations based on portfolio analysis and market conditions."
+            role: 'system',
+            content:
+              'You are a DeFi trading advisor. Provide specific, actionable trading recommendations based on portfolio analysis and market conditions.',
           },
           {
-            role: "user",
-            content: prompt
-          }
+            role: 'user',
+            content: prompt,
+          },
         ],
         temperature: 0.4,
         max_tokens: 800,
       });
 
-      const content = completion.choices[0]?.message?.content || "";
+      const content = completion.choices[0]?.message?.content || '';
       return this.parseRecommendations(content);
     } catch (error) {
       console.error('AI Recommendations Error:', error);
@@ -166,25 +171,26 @@ export class AIService {
   ): Promise<AIMessage> {
     try {
       const systemPrompt = this.createSystemPrompt(portfolio, context);
-      
+
       const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
-        { role: "system", content: systemPrompt },
+        { role: 'system', content: systemPrompt },
         ...this.conversationHistory.slice(-10).map(msg => ({
-          role: msg.type === 'user' ? 'user' as const : 'assistant' as const,
-          content: msg.content
+          role:
+            msg.type === 'user' ? ('user' as const) : ('assistant' as const),
+          content: msg.content,
         })),
-        { role: "user", content: message }
+        { role: 'user', content: message },
       ];
 
       const completion = await openai.chat.completions.create({
-        model: "gpt-4-turbo-preview",
+        model: 'gpt-4-turbo-preview',
         messages,
         temperature: 0.7,
         max_tokens: 500,
       });
 
-      const responseContent = completion.choices[0]?.message?.content || "";
-      
+      const responseContent = completion.choices[0]?.message?.content || '';
+
       const aiMessage: AIMessage = {
         id: `msg_${Date.now()}`,
         type: 'assistant',
@@ -192,7 +198,7 @@ export class AIService {
         timestamp: new Date(),
         metadata: {
           tokens: this.extractTokenMentions(responseContent),
-        }
+        },
       };
 
       // Update conversation history
@@ -225,7 +231,7 @@ export class AIService {
   async analyzeMarketTrends(marketData: MarketData[]): Promise<AIAnalysis> {
     try {
       const marketSummary = this.createDetailedMarketSummary(marketData);
-      
+
       const prompt = `
         Analyze current DeFi market trends and conditions:
         
@@ -243,24 +249,25 @@ export class AIService {
       `;
 
       const completion = await openai.chat.completions.create({
-        model: "gpt-4-turbo-preview",
+        model: 'gpt-4-turbo-preview',
         messages: [
           {
-            role: "system",
-            content: "You are a cryptocurrency market analyst specializing in DeFi. Provide insightful market analysis with actionable conclusions."
+            role: 'system',
+            content:
+              'You are a cryptocurrency market analyst specializing in DeFi. Provide insightful market analysis with actionable conclusions.',
           },
           {
-            role: "user",
-            content: prompt
-          }
+            role: 'user',
+            content: prompt,
+          },
         ],
         temperature: 0.3,
         max_tokens: 1000,
       });
 
-      const analysisContent = completion.choices[0]?.message?.content || "";
+      const analysisContent = completion.choices[0]?.message?.content || '';
       const insights = this.extractInsights(analysisContent);
-      
+
       return {
         id: `market_analysis_${Date.now()}`,
         type: 'market',
@@ -268,7 +275,7 @@ export class AIService {
         summary: insights.summary,
         insights: insights.keyPoints,
         recommendations: insights.recommendations,
-        confidence: 0.80,
+        confidence: 0.8,
         createdAt: new Date(),
       };
     } catch (error) {
@@ -284,7 +291,7 @@ export class AIService {
   async assessRisk(portfolio: Portfolio): Promise<AIAnalysis> {
     try {
       const riskMetrics = this.calculateRiskMetrics(portfolio);
-      
+
       const prompt = `
         Assess the risk profile of this DeFi portfolio:
         
@@ -296,9 +303,12 @@ export class AIService {
         ${riskMetrics}
         
         INDIVIDUAL POSITIONS:
-        ${portfolio.positions.map(pos => 
-          `${pos.token.symbol}: ${formatCurrency(pos.balanceUSD)} (${pos.allocation.toFixed(1)}%)`
-        ).join('\n')}
+        ${portfolio.positions
+          .map(
+            pos =>
+              `${pos.token.symbol}: ${formatCurrency(pos.balanceUSD)} (${pos.allocation.toFixed(1)}%)`
+          )
+          .join('\n')}
         
         Evaluate:
         1. Concentration risk
@@ -310,24 +320,25 @@ export class AIService {
       `;
 
       const completion = await openai.chat.completions.create({
-        model: "gpt-4-turbo-preview",
+        model: 'gpt-4-turbo-preview',
         messages: [
           {
-            role: "system",
-            content: "You are a DeFi risk analyst. Assess portfolio risks with specific focus on DeFi-related vulnerabilities and provide concrete mitigation strategies."
+            role: 'system',
+            content:
+              'You are a DeFi risk analyst. Assess portfolio risks with specific focus on DeFi-related vulnerabilities and provide concrete mitigation strategies.',
           },
           {
-            role: "user",
-            content: prompt
-          }
+            role: 'user',
+            content: prompt,
+          },
         ],
         temperature: 0.2,
         max_tokens: 800,
       });
 
-      const analysisContent = completion.choices[0]?.message?.content || "";
+      const analysisContent = completion.choices[0]?.message?.content || '';
       const insights = this.extractInsights(analysisContent);
-      
+
       return {
         id: `risk_analysis_${Date.now()}`,
         type: 'risk',
@@ -335,7 +346,7 @@ export class AIService {
         summary: insights.summary,
         insights: insights.keyPoints,
         recommendations: insights.recommendations,
-        confidence: 0.90,
+        confidence: 0.9,
         createdAt: new Date(),
       };
     } catch (error) {
@@ -359,29 +370,41 @@ Total PnL: ${formatCurrency(portfolio.totalPnlUSD)} (${formatPercentage(portfoli
 Positions: ${portfolio.positions.length}
 
 Top Holdings:
-${topPositions.map(pos => 
-  `- ${pos.token.symbol}: ${formatCurrency(pos.balanceUSD)} (${pos.allocation.toFixed(1)}%) ${
-    pos.pnlPercentage ? `[${formatPercentage(pos.pnlPercentage)}]` : ''
-  }`
-).join('\n')}
+${topPositions
+  .map(
+    pos =>
+      `- ${pos.token.symbol}: ${formatCurrency(pos.balanceUSD)} (${pos.allocation.toFixed(1)}%) ${
+        pos.pnlPercentage ? `[${formatPercentage(pos.pnlPercentage)}]` : ''
+      }`
+  )
+  .join('\n')}
     `.trim();
   }
 
   private createMarketSummary(marketData: MarketData[]): string {
-    return marketData.slice(0, 10).map(data => 
-      `${data.token.symbol}: $${data.price.price.toFixed(4)} (${formatPercentage(data.price.priceChange24h)})`
-    ).join(', ');
+    return marketData
+      .slice(0, 10)
+      .map(
+        data =>
+          `${data.token.symbol}: $${data.price.price.toFixed(4)} (${formatPercentage(data.price.priceChange24h)})`
+      )
+      .join(', ');
   }
 
   private createDetailedMarketSummary(marketData: MarketData[]): string {
-    const summary = marketData.slice(0, 15).map(data => `
+    const summary = marketData
+      .slice(0, 15)
+      .map(
+        data => `
 ${data.token.symbol} (${data.token.name}):
 - Price: $${data.price.price.toFixed(4)}
 - 24h Change: ${formatPercentage(data.price.priceChange24h)}
 - 7d Change: ${formatPercentage(data.price.priceChange7d)}
 - Market Cap: ${formatCurrency(data.price.marketCap)}
 - Volume: ${formatCurrency(data.price.volume24h)}
-    `).join('\n');
+    `
+      )
+      .join('\n');
 
     return summary;
   }
@@ -408,18 +431,26 @@ Performance: ${formatPercentage(portfolio.totalPnlPercentage)}`;
   private calculateRiskMetrics(portfolio: Portfolio): string {
     const positions = portfolio.positions;
     const totalValue = portfolio.totalValueUSD;
-    
+
     // Concentration risk (largest position %)
     const largestPosition = Math.max(...positions.map(p => p.allocation));
-    
+
     // Number of protocols
-    const protocols = new Set(positions.map(p => 
-      p.token.tags?.find(tag => ['lending', 'dex', 'yield'].includes(tag)) || 'unknown'
-    ));
-    
+    const protocols = new Set(
+      positions.map(
+        p =>
+          p.token.tags?.find(tag =>
+            ['lending', 'dex', 'yield'].includes(tag)
+          ) || 'unknown'
+      )
+    );
+
     // Volatility estimate based on price changes
-    const avgVolatility = positions.reduce((sum, pos) => 
-      sum + Math.abs(pos.pnlPercentage || 0), 0) / positions.length;
+    const avgVolatility =
+      positions.reduce(
+        (sum, pos) => sum + Math.abs(pos.pnlPercentage || 0),
+        0
+      ) / positions.length;
 
     return `
 Concentration Risk: Largest position is ${largestPosition.toFixed(1)}% of portfolio
@@ -435,40 +466,54 @@ Position Count: ${positions.length} positions
     recommendations: string[];
   } {
     const lines = content.split('\n').filter(line => line.trim());
-    
+
     // Extract summary (first paragraph)
     const summary = lines.slice(0, 3).join(' ').substring(0, 200);
-    
+
     // Extract bullet points and numbered items as insights
-    const keyPoints = lines.filter(line => 
-      line.match(/^[\d\-\*\•]/) || line.toLowerCase().includes('key') || line.toLowerCase().includes('important')
-    ).slice(0, 5);
-    
+    const keyPoints = lines
+      .filter(
+        line =>
+          line.match(/^[\d\-\*\•]/) ||
+          line.toLowerCase().includes('key') ||
+          line.toLowerCase().includes('important')
+      )
+      .slice(0, 5);
+
     // Extract recommendations
-    const recommendations = lines.filter(line =>
-      line.toLowerCase().includes('recommend') || 
-      line.toLowerCase().includes('suggest') ||
-      line.toLowerCase().includes('consider') ||
-      line.toLowerCase().includes('should')
-    ).slice(0, 3);
+    const recommendations = lines
+      .filter(
+        line =>
+          line.toLowerCase().includes('recommend') ||
+          line.toLowerCase().includes('suggest') ||
+          line.toLowerCase().includes('consider') ||
+          line.toLowerCase().includes('should')
+      )
+      .slice(0, 3);
 
     return {
       summary: summary || 'Analysis completed successfully.',
-      keyPoints: keyPoints.length > 0 ? keyPoints : ['Analysis provided comprehensive insights.'],
-      recommendations: recommendations.length > 0 ? recommendations : ['Continue monitoring portfolio performance.']
+      keyPoints:
+        keyPoints.length > 0
+          ? keyPoints
+          : ['Analysis provided comprehensive insights.'],
+      recommendations:
+        recommendations.length > 0
+          ? recommendations
+          : ['Continue monitoring portfolio performance.'],
     };
   }
 
   private parseRecommendations(content: string): AIRecommendation[] {
     const lines = content.split('\n').filter(line => line.trim());
     const recommendations: AIRecommendation[] = [];
-    
+
     // Simple parsing logic - look for action words and tokens
     let currentRec: Partial<AIRecommendation> = {};
-    
+
     for (const line of lines) {
       const lowerLine = line.toLowerCase();
-      
+
       // Detect action type
       if (lowerLine.includes('buy') || lowerLine.includes('purchase')) {
         currentRec.type = 'buy';
@@ -476,24 +521,30 @@ Position Count: ${positions.length} positions
         currentRec.type = 'sell';
       } else if (lowerLine.includes('hold') || lowerLine.includes('maintain')) {
         currentRec.type = 'hold';
-      } else if (lowerLine.includes('rebalance') || lowerLine.includes('adjust')) {
+      } else if (
+        lowerLine.includes('rebalance') ||
+        lowerLine.includes('adjust')
+      ) {
         currentRec.type = 'rebalance';
       }
-      
+
       // Detect priority
       if (lowerLine.includes('high') || lowerLine.includes('urgent')) {
         currentRec.priority = 'high';
-      } else if (lowerLine.includes('medium') || lowerLine.includes('moderate')) {
+      } else if (
+        lowerLine.includes('medium') ||
+        lowerLine.includes('moderate')
+      ) {
         currentRec.priority = 'medium';
       } else if (lowerLine.includes('low')) {
         currentRec.priority = 'low';
       }
-      
+
       // If line contains reasoning, save it
       if (line.length > 20 && !line.match(/^[\d\-\*]/)) {
         currentRec.reasoning = line;
         currentRec.action = line.substring(0, 100);
-        
+
         // Complete the recommendation
         if (currentRec.type) {
           recommendations.push({
@@ -505,32 +556,42 @@ Position Count: ${positions.length} positions
             estimatedImpact: Math.random() * 10 + 5, // Mock impact 5-15%
             createdAt: new Date(),
           });
-          
+
           currentRec = {};
         }
       }
     }
-    
+
     // If no recommendations were parsed, create a default one
     if (recommendations.length === 0) {
       recommendations.push({
         id: `rec_${Date.now()}`,
         type: 'hold',
         action: 'Continue monitoring current positions',
-        reasoning: 'Portfolio appears well-balanced for current market conditions',
+        reasoning:
+          'Portfolio appears well-balanced for current market conditions',
         priority: 'low',
         estimatedImpact: 2,
         createdAt: new Date(),
       });
     }
-    
+
     return recommendations.slice(0, 5); // Max 5 recommendations
   }
 
   private extractTokenMentions(content: string): Token[] {
     const tokens: Token[] = [];
-    const commonTokens = ['BTC', 'ETH', 'USDC', 'DAI', 'UNI', 'AAVE', 'COMP', 'LINK'];
-    
+    const commonTokens = [
+      'BTC',
+      'ETH',
+      'USDC',
+      'DAI',
+      'UNI',
+      'AAVE',
+      'COMP',
+      'LINK',
+    ];
+
     for (const symbol of commonTokens) {
       if (content.toUpperCase().includes(symbol)) {
         tokens.push({
@@ -543,7 +604,7 @@ Position Count: ${positions.length} positions
         });
       }
     }
-    
+
     return tokens;
   }
 
@@ -564,14 +625,14 @@ Position Count: ${positions.length} positions
       if (!process.env.OPENAI_API_KEY) {
         return false;
       }
-      
+
       // Test API connection with a simple request
       await openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
-        messages: [{ role: "user", content: "test" }],
+        model: 'gpt-3.5-turbo',
+        messages: [{ role: 'user', content: 'test' }],
         max_tokens: 1,
       });
-      
+
       return true;
     } catch (error) {
       console.warn('AI Service not available:', error);

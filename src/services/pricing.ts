@@ -1,5 +1,11 @@
 import axios, { AxiosInstance } from 'axios';
-import { PriceData, Token, MarketData, ChartDataPoint, ApiResponse } from '@/types';
+import {
+  PriceData,
+  Token,
+  MarketData,
+  ChartDataPoint,
+  ApiResponse,
+} from '@/types';
 
 // =============================================================================
 // PRICE SERVICE INTERFACES
@@ -56,18 +62,21 @@ export class PricingService {
       baseURL: 'https://api.coingecko.com/api/v3',
       timeout: 30000,
       headers: {
-        'Accept': 'application/json',
+        Accept: 'application/json',
         ...(process.env.NEXT_PUBLIC_COINGECKO_API_KEY && {
-          'x-cg-pro-api-key': process.env.NEXT_PUBLIC_COINGECKO_API_KEY
-        })
-      }
+          'x-cg-pro-api-key': process.env.NEXT_PUBLIC_COINGECKO_API_KEY,
+        }),
+      },
     });
 
     // Add response interceptor for error handling
     this.client.interceptors.response.use(
       response => response,
       error => {
-        console.error('CoinGecko API Error:', error.response?.data || error.message);
+        console.error(
+          'CoinGecko API Error:',
+          error.response?.data || error.message
+        );
         throw error;
       }
     );
@@ -87,17 +96,21 @@ export class PricingService {
   private checkRateLimit(endpoint: string): void {
     const now = Date.now();
     const requests = this.rateLimitTracker.get(endpoint) || [];
-    
+
     // Remove requests older than 1 minute
-    const recentRequests = requests.filter(timestamp => now - timestamp < 60000);
-    
+    const recentRequests = requests.filter(
+      timestamp => now - timestamp < 60000
+    );
+
     // Free tier: 10-30 calls per minute depending on endpoint
     const limit = process.env.NEXT_PUBLIC_COINGECKO_API_KEY ? 500 : 10;
-    
+
     if (recentRequests.length >= limit) {
-      throw new Error('Rate limit exceeded. Please wait before making more requests.');
+      throw new Error(
+        'Rate limit exceeded. Please wait before making more requests.'
+      );
     }
-    
+
     recentRequests.push(now);
     this.rateLimitTracker.set(endpoint, recentRequests);
   }
@@ -123,30 +136,32 @@ export class PricingService {
   // ==========================================================================
 
   private readonly TOKEN_ID_MAP: Record<string, string> = {
-    'ETH': 'ethereum',
-    'BTC': 'bitcoin',
-    'USDC': 'usd-coin',
-    'USDT': 'tether',
-    'DAI': 'dai',
-    'UNI': 'uniswap',
-    'LINK': 'chainlink',
-    'AAVE': 'aave',
-    'COMP': 'compound-governance-token',
-    'SUSHI': 'sushi',
-    'CRV': 'curve-dao-token',
-    'SNX': 'havven',
-    'MKR': 'maker',
-    'WETH': 'weth',
-    'MATIC': 'matic-network',
-    'AVAX': 'avalanche-2',
-    'SOL': 'solana',
-    'ADA': 'cardano',
-    'DOT': 'polkadot',
-    'ATOM': 'cosmos',
+    ETH: 'ethereum',
+    BTC: 'bitcoin',
+    USDC: 'usd-coin',
+    USDT: 'tether',
+    DAI: 'dai',
+    UNI: 'uniswap',
+    LINK: 'chainlink',
+    AAVE: 'aave',
+    COMP: 'compound-governance-token',
+    SUSHI: 'sushi',
+    CRV: 'curve-dao-token',
+    SNX: 'havven',
+    MKR: 'maker',
+    WETH: 'weth',
+    MATIC: 'matic-network',
+    AVAX: 'avalanche-2',
+    SOL: 'solana',
+    ADA: 'cardano',
+    DOT: 'polkadot',
+    ATOM: 'cosmos',
   };
 
   private getTokenId(tokenSymbol: string): string {
-    return this.TOKEN_ID_MAP[tokenSymbol.toUpperCase()] || tokenSymbol.toLowerCase();
+    return (
+      this.TOKEN_ID_MAP[tokenSymbol.toUpperCase()] || tokenSymbol.toLowerCase()
+    );
   }
 
   // ==========================================================================
@@ -156,7 +171,7 @@ export class PricingService {
   async getTokenPrice(tokenSymbol: string): Promise<PriceData> {
     const tokenId = this.getTokenId(tokenSymbol);
     const cacheKey = `price_${tokenId}`;
-    
+
     // Check cache first
     const cached = this.getCachedData<PriceData>(cacheKey);
     if (cached) {
@@ -165,7 +180,7 @@ export class PricingService {
 
     try {
       this.checkRateLimit('coins');
-      
+
       const response = await this.client.get(`/coins/${tokenId}`, {
         params: {
           localization: false,
@@ -173,8 +188,8 @@ export class PricingService {
           market_data: true,
           community_data: false,
           developer_data: false,
-          sparkline: false
-        }
+          sparkline: false,
+        },
       });
 
       const coin = response.data;
@@ -183,7 +198,8 @@ export class PricingService {
       const priceData: PriceData = {
         tokenId,
         price: marketData.current_price?.usd || 0,
-        priceChange1h: marketData.price_change_percentage_1h_in_currency?.usd || 0,
+        priceChange1h:
+          marketData.price_change_percentage_1h_in_currency?.usd || 0,
         priceChange24h: marketData.price_change_percentage_24h || 0,
         priceChange7d: marketData.price_change_percentage_7d || 0,
         marketCap: marketData.market_cap?.usd || 0,
@@ -201,10 +217,12 @@ export class PricingService {
     }
   }
 
-  async getMultipleTokenPrices(tokenSymbols: string[]): Promise<Record<string, PriceData>> {
+  async getMultipleTokenPrices(
+    tokenSymbols: string[]
+  ): Promise<Record<string, PriceData>> {
     const tokenIds = tokenSymbols.map(symbol => this.getTokenId(symbol));
     const cacheKey = `multi_price_${tokenIds.sort().join(',')}`;
-    
+
     // Check cache first
     const cached = this.getCachedData<Record<string, PriceData>>(cacheKey);
     if (cached) {
@@ -213,7 +231,7 @@ export class PricingService {
 
     try {
       this.checkRateLimit('coins/markets');
-      
+
       const response = await this.client.get('/coins/markets', {
         params: {
           vs_currency: 'usd',
@@ -222,8 +240,8 @@ export class PricingService {
           per_page: tokenIds.length,
           page: 1,
           sparkline: false,
-          price_change_percentage: '1h,24h,7d'
-        }
+          price_change_percentage: '1h,24h,7d',
+        },
       });
 
       const coins: CoinGeckoPrice[] = response.data;
@@ -258,12 +276,12 @@ export class PricingService {
   // ==========================================================================
 
   async getTokenChart(
-    tokenSymbol: string, 
+    tokenSymbol: string,
     timeframe: '1h' | '24h' | '7d' | '30d' | '90d' | '1y'
   ): Promise<ChartDataPoint[]> {
     const tokenId = this.getTokenId(tokenSymbol);
     const cacheKey = `chart_${tokenId}_${timeframe}`;
-    
+
     // Check cache first
     const cached = this.getCachedData<ChartDataPoint[]>(cacheKey);
     if (cached) {
@@ -272,25 +290,27 @@ export class PricingService {
 
     try {
       this.checkRateLimit('coins/chart');
-      
+
       const days = this.getChartDays(timeframe);
       const interval = this.getChartInterval(timeframe);
-      
+
       const response = await this.client.get(`/coins/${tokenId}/market_chart`, {
         params: {
           vs_currency: 'usd',
           days,
-          interval
-        }
+          interval,
+        },
       });
 
       const chartData: CoinGeckoChart = response.data;
-      
-      const dataPoints: ChartDataPoint[] = chartData.prices.map(([timestamp, price], index) => ({
-        timestamp: new Date(timestamp),
-        price,
-        volume: chartData.total_volumes[index]?.[1] || 0
-      }));
+
+      const dataPoints: ChartDataPoint[] = chartData.prices.map(
+        ([timestamp, price], index) => ({
+          timestamp: new Date(timestamp),
+          price,
+          volume: chartData.total_volumes[index]?.[1] || 0,
+        })
+      );
 
       this.setCachedData(cacheKey, dataPoints);
       return dataPoints;
@@ -302,25 +322,39 @@ export class PricingService {
 
   private getChartDays(timeframe: string): string {
     switch (timeframe) {
-      case '1h': return '1';
-      case '24h': return '1';
-      case '7d': return '7';
-      case '30d': return '30';
-      case '90d': return '90';
-      case '1y': return '365';
-      default: return '7';
+      case '1h':
+        return '1';
+      case '24h':
+        return '1';
+      case '7d':
+        return '7';
+      case '30d':
+        return '30';
+      case '90d':
+        return '90';
+      case '1y':
+        return '365';
+      default:
+        return '7';
     }
   }
 
   private getChartInterval(timeframe: string): string {
     switch (timeframe) {
-      case '1h': return 'minutely';
-      case '24h': return 'hourly';
-      case '7d': return 'hourly';
-      case '30d': return 'daily';
-      case '90d': return 'daily';
-      case '1y': return 'daily';
-      default: return 'daily';
+      case '1h':
+        return 'minutely';
+      case '24h':
+        return 'hourly';
+      case '7d':
+        return 'hourly';
+      case '30d':
+        return 'daily';
+      case '90d':
+        return 'daily';
+      case '1y':
+        return 'daily';
+      default:
+        return 'daily';
     }
   }
 
@@ -358,7 +392,10 @@ export class PricingService {
           timeframe: '7d',
         });
       } catch (error) {
-        console.warn(`Failed to get complete market data for ${symbol}:`, error);
+        console.warn(
+          `Failed to get complete market data for ${symbol}:`,
+          error
+        );
       }
     }
 
@@ -371,7 +408,7 @@ export class PricingService {
 
   async getTrendingTokens(): Promise<Token[]> {
     const cacheKey = 'trending_tokens';
-    
+
     // Check cache first
     const cached = this.getCachedData<Token[]>(cacheKey);
     if (cached) {
@@ -380,7 +417,7 @@ export class PricingService {
 
     try {
       this.checkRateLimit('search/trending');
-      
+
       const response = await this.client.get('/search/trending');
       const trending = response.data.coins || [];
 
@@ -409,7 +446,7 @@ export class PricingService {
 
   async getTopTokens(limit: number = 50): Promise<Token[]> {
     const cacheKey = `top_tokens_${limit}`;
-    
+
     // Check cache first
     const cached = this.getCachedData<Token[]>(cacheKey);
     if (cached) {
@@ -418,7 +455,7 @@ export class PricingService {
 
     try {
       this.checkRateLimit('coins/markets');
-      
+
       const response = await this.client.get('/coins/markets', {
         params: {
           vs_currency: 'usd',
@@ -426,12 +463,12 @@ export class PricingService {
           per_page: limit,
           page: 1,
           sparkline: false,
-          price_change_percentage: '24h'
-        }
+          price_change_percentage: '24h',
+        },
       });
 
       const coins: CoinGeckoPrice[] = response.data;
-      
+
       const tokens: Token[] = coins.map(coin => ({
         id: coin.id,
         address: '0x0000000000000000000000000000000000000000' as any,
@@ -464,7 +501,7 @@ export class PricingService {
     }
 
     const cacheKey = `search_${query.toLowerCase()}`;
-    
+
     // Check cache first
     const cached = this.getCachedData<Token[]>(cacheKey);
     if (cached) {
@@ -473,13 +510,13 @@ export class PricingService {
 
     try {
       this.checkRateLimit('search');
-      
+
       const response = await this.client.get('/search', {
-        params: { query }
+        params: { query },
       });
 
       const results = response.data.coins || [];
-      
+
       const tokens: Token[] = results.slice(0, 20).map((coin: any) => ({
         id: coin.id,
         address: '0x0000000000000000000000000000000000000000' as any,
@@ -510,7 +547,7 @@ export class PricingService {
     marketCapChange24h: number;
   }> {
     const cacheKey = 'global_market_data';
-    
+
     // Check cache first
     const cached = this.getCachedData<any>(cacheKey);
     if (cached) {
@@ -519,7 +556,7 @@ export class PricingService {
 
     try {
       this.checkRateLimit('global');
-      
+
       const response = await this.client.get('/global');
       const data = response.data.data;
 

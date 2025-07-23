@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  ArrowUpDownIcon, 
+import {
+  ArrowUpDownIcon,
   RefreshCwIcon,
   SettingsIcon,
   TrendingUpIcon,
@@ -14,7 +14,7 @@ import {
   WalletIcon,
   ChevronDownIcon,
   InfoIcon,
-  ZapIcon
+  ZapIcon,
 } from 'lucide-react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useWalletModal } from '@solana/wallet-adapter-react-ui';
@@ -23,12 +23,7 @@ import { PublicKey } from '@solana/web3.js';
 import { toast } from 'react-hot-toast';
 
 // Types and Hooks
-import { 
-  SwapQuote, 
-  Token, 
-  ChainType,
-  AIRecommendation 
-} from '@/types';
+import { SwapQuote, Token, ChainType, AIRecommendation } from '@/types';
 import { useMultiChainWallet } from '@/hooks/useMultiChainWallet';
 import { useTrading } from '@/stores/trading';
 
@@ -56,7 +51,7 @@ export default function TradingPanel(): JSX.Element {
     switchToEVM,
     switchToSolana,
     isConnecting,
-    error: walletError
+    error: walletError,
   } = useMultiChainWallet();
 
   const {
@@ -76,7 +71,7 @@ export default function TradingPanel(): JSX.Element {
     selectQuote,
     executeSwap,
     swapTokens,
-    clearQuotes
+    clearQuotes,
   } = useTrading();
 
   // Solana wallet modal
@@ -88,7 +83,9 @@ export default function TradingPanel(): JSX.Element {
   const [showChainSelector, setShowChainSelector] = useState(false);
   const [tokens, setTokens] = useState<Token[]>([]);
   const [loadingTokens, setLoadingTokens] = useState(false);
-  const [aiRecommendations, setAiRecommendations] = useState<AIRecommendation[]>([]);
+  const [aiRecommendations, setAiRecommendations] = useState<
+    AIRecommendation[]
+  >([]);
   const [showAiPanel, setShowAiPanel] = useState(false);
 
   // ==========================================================================
@@ -99,13 +96,13 @@ export default function TradingPanel(): JSX.Element {
     setLoadingTokens(true);
     try {
       let tokenList: Token[] = [];
-      
+
       if (chainType === 'solana') {
         tokenList = await jupiterService.getPopularTokens();
       } else {
         tokenList = await dexService.getSupportedTokens(1); // Ethereum mainnet
       }
-      
+
       setTokens(tokenList);
     } catch (error) {
       console.error('Failed to load tokens:', error);
@@ -144,33 +141,59 @@ export default function TradingPanel(): JSX.Element {
   // ==========================================================================
 
   const fetchQuotes = useCallback(async () => {
-    if (!fromToken || !toToken || !amount || parseFloat(amount) <= 0 || !activeChainType) {
+    if (
+      !fromToken ||
+      !toToken ||
+      !amount ||
+      parseFloat(amount) <= 0 ||
+      !activeChainType
+    ) {
       return;
     }
 
     clearQuotes();
-    
+
     try {
       let newQuotes: SwapQuote[] = [];
-      
+
       if (activeChainType === 'solana') {
-        newQuotes = await jupiterService.getSwapQuote(fromToken, toToken, amount, slippage);
+        newQuotes = await jupiterService.getSwapQuote(
+          fromToken,
+          toToken,
+          amount,
+          slippage
+        );
       } else {
-        newQuotes = await dexService.getSwapQuote(fromToken, toToken, amount, slippage, 1);
+        newQuotes = await dexService.getSwapQuote(
+          fromToken,
+          toToken,
+          amount,
+          slippage,
+          1
+        );
       }
 
       // Update store with new quotes
-      await getQuotes(fromToken, toToken, amount, slippage);
-      
+      await getQuotes();
+
       // Auto-select best quote
       if (newQuotes.length > 0) {
-        selectQuote(newQuotes[0].id);
+        selectQuote(newQuotes[0]?.id || '');
       }
     } catch (error) {
       console.error('Failed to fetch quotes:', error);
       toast.error('Failed to get swap quotes');
     }
-  }, [fromToken, toToken, amount, slippage, activeChainType, getQuotes, selectQuote, clearQuotes]);
+  }, [
+    fromToken,
+    toToken,
+    amount,
+    slippage,
+    activeChainType,
+    getQuotes,
+    selectQuote,
+    clearQuotes,
+  ]);
 
   // Auto-fetch quotes when inputs change
   useEffect(() => {
@@ -191,7 +214,10 @@ export default function TradingPanel(): JSX.Element {
     if (!fromToken || !toToken || !selectedQuote) return;
 
     try {
-      const marketData = await pricingService.getMarketData([fromToken.symbol, toToken.symbol]);
+      const marketData = await pricingService.getMarketData([
+        fromToken.symbol,
+        toToken.symbol,
+      ]);
       const recommendations = await aiService.generateTradingRecommendations(
         {} as any, // Would need actual portfolio
         marketData,
@@ -215,24 +241,27 @@ export default function TradingPanel(): JSX.Element {
 
     try {
       let txHash: string;
-      
+
       if (activeChainType === 'solana') {
         const { publicKey } = useWallet();
         if (!publicKey) {
           toast.error('Solana wallet not connected');
           return;
         }
-        
-        const swapTransaction = await jupiterService.executeSwap(selectedQuote, publicKey);
+
+        const swapTransaction = await jupiterService.executeSwap(
+          selectedQuote,
+          publicKey
+        );
         // Here you would send the transaction with the wallet
         txHash = 'solana_tx_hash'; // Placeholder
       } else {
         // EVM swap execution would go here
-        txHash = await executeSwap(selectedQuote);
+        txHash = await executeSwap();
       }
 
       toast.success(`Swap executed! Transaction: ${txHash.slice(0, 8)}...`);
-      
+
       // Clear form after successful swap
       setAmount('');
       clearQuotes();
@@ -240,7 +269,14 @@ export default function TradingPanel(): JSX.Element {
       console.error('Swap failed:', error);
       toast.error('Swap failed. Please try again.');
     }
-  }, [selectedQuote, activeWallet, activeChainType, executeSwap, setAmount, clearQuotes]);
+  }, [
+    selectedQuote,
+    activeWallet,
+    activeChainType,
+    executeSwap,
+    setAmount,
+    clearQuotes,
+  ]);
 
   // ==========================================================================
   // RENDER HELPERS
@@ -252,12 +288,14 @@ export default function TradingPanel(): JSX.Element {
         onClick={() => setShowChainSelector(!showChainSelector)}
         className="btn btn-outline btn-sm flex items-center gap-2"
       >
-        <div className={cn(
-          "w-2 h-2 rounded-full",
-          activeChainType === 'solana' ? "bg-purple-500" : "bg-blue-500"
-        )} />
+        <div
+          className={cn(
+            'h-2 w-2 rounded-full',
+            activeChainType === 'solana' ? 'bg-purple-500' : 'bg-blue-500'
+          )}
+        />
         {activeChainType === 'solana' ? 'Solana' : 'Ethereum'}
-        <ChevronDownIcon className="w-4 h-4" />
+        <ChevronDownIcon className="h-4 w-4" />
       </button>
 
       <AnimatePresence>
@@ -266,7 +304,7 @@ export default function TradingPanel(): JSX.Element {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="absolute top-full left-0 mt-2 w-48 bg-card border border-border rounded-lg shadow-lg z-50"
+            className="absolute left-0 top-full z-50 mt-2 w-48 rounded-lg border border-border bg-card shadow-lg"
           >
             <div className="p-2">
               <button
@@ -275,24 +313,32 @@ export default function TradingPanel(): JSX.Element {
                   setShowChainSelector(false);
                 }}
                 disabled={!hasEVMWallet}
-                className="w-full flex items-center gap-3 p-2 rounded-md hover:bg-muted transition-colors disabled:opacity-50"
+                className="flex w-full items-center gap-3 rounded-md p-2 transition-colors hover:bg-muted disabled:opacity-50"
               >
-                <div className="w-2 h-2 rounded-full bg-blue-500" />
+                <div className="h-2 w-2 rounded-full bg-blue-500" />
                 <span>Ethereum (1inch)</span>
-                {!hasEVMWallet && <span className="text-xs text-muted-foreground ml-auto">Not connected</span>}
+                {!hasEVMWallet && (
+                  <span className="ml-auto text-xs text-muted-foreground">
+                    Not connected
+                  </span>
+                )}
               </button>
-              
+
               <button
                 onClick={() => {
                   switchToSolana();
                   setShowChainSelector(false);
                 }}
                 disabled={!hasSolanaWallet}
-                className="w-full flex items-center gap-3 p-2 rounded-md hover:bg-muted transition-colors disabled:opacity-50"
+                className="flex w-full items-center gap-3 rounded-md p-2 transition-colors hover:bg-muted disabled:opacity-50"
               >
-                <div className="w-2 h-2 rounded-full bg-purple-500" />
+                <div className="h-2 w-2 rounded-full bg-purple-500" />
                 <span>Solana (Jupiter)</span>
-                {!hasSolanaWallet && <span className="text-xs text-muted-foreground ml-auto">Not connected</span>}
+                {!hasSolanaWallet && (
+                  <span className="ml-auto text-xs text-muted-foreground">
+                    Not connected
+                  </span>
+                )}
               </button>
             </div>
           </motion.div>
@@ -305,13 +351,16 @@ export default function TradingPanel(): JSX.Element {
     if (!activeWallet) {
       return (
         <div className="card p-6 text-center">
-          <WalletIcon className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-semibold mb-2">Connect Wallet to Trade</h3>
-          <p className="text-muted-foreground mb-4">
-            Connect your {activeChainType === 'solana' ? 'Solana' : 'Ethereum'} wallet to start trading
+          <WalletIcon className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+          <h3 className="mb-2 text-lg font-semibold">
+            Connect Wallet to Trade
+          </h3>
+          <p className="mb-4 text-muted-foreground">
+            Connect your {activeChainType === 'solana' ? 'Solana' : 'Ethereum'}{' '}
+            wallet to start trading
           </p>
-          
-          <div className="flex gap-3 justify-center">
+
+          <div className="flex justify-center gap-3">
             <button
               onClick={() => {
                 if (activeChainType === 'solana') {
@@ -323,7 +372,9 @@ export default function TradingPanel(): JSX.Element {
               className="btn btn-primary"
               disabled={isConnecting}
             >
-              {isConnecting ? 'Connecting...' : `Connect ${activeChainType === 'solana' ? 'Phantom/Solflare' : 'MetaMask'}`}
+              {isConnecting
+                ? 'Connecting...'
+                : `Connect ${activeChainType === 'solana' ? 'Phantom/Solflare' : 'MetaMask'}`}
             </button>
           </div>
 
@@ -331,14 +382,14 @@ export default function TradingPanel(): JSX.Element {
             <div className="mt-4 text-sm text-muted-foreground">
               <button
                 onClick={() => switchToSolana()}
-                className="text-purple-600 hover:underline mr-2"
+                className="mr-2 text-purple-600 hover:underline"
               >
                 Switch to Solana
               </button>
               <span>•</span>
               <button
                 onClick={() => switchToEVM()}
-                className="text-blue-600 hover:underline ml-2"
+                className="ml-2 text-blue-600 hover:underline"
               >
                 Switch to Ethereum
               </button>
@@ -351,16 +402,24 @@ export default function TradingPanel(): JSX.Element {
     return null;
   };
 
-  const renderTokenSelector = (token: Token | null, onSelect: (token: Token) => void, label: string) => (
+  const renderTokenSelector = (
+    token: Token | null,
+    onSelect: (token: Token) => void,
+    label: string
+  ) => (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-muted-foreground">{label}</label>
+      <label className="text-sm font-medium text-muted-foreground">
+        {label}
+      </label>
       <button
-        onClick={() => {/* Open token selector modal */}}
-        className="w-full flex items-center gap-3 p-3 border border-border rounded-lg hover:bg-muted/50 transition-colors"
+        onClick={() => {
+          /* Open token selector modal */
+        }}
+        className="flex w-full items-center gap-3 rounded-lg border border-border p-3 transition-colors hover:bg-muted/50"
       >
         {token ? (
           <>
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-secondary/20">
               <span className="text-sm font-semibold">{token.symbol[0]}</span>
             </div>
             <div className="flex-1 text-left">
@@ -370,13 +429,13 @@ export default function TradingPanel(): JSX.Element {
           </>
         ) : (
           <>
-            <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
               <span className="text-sm">?</span>
             </div>
             <span className="text-muted-foreground">Select token</span>
           </>
         )}
-        <ChevronDownIcon className="w-4 h-4 text-muted-foreground" />
+        <ChevronDownIcon className="h-4 w-4 text-muted-foreground" />
       </button>
     </div>
   );
@@ -387,18 +446,18 @@ export default function TradingPanel(): JSX.Element {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className={cn(
-        "p-4 border rounded-lg cursor-pointer transition-all",
-        isSelected 
-          ? "border-primary bg-primary/5" 
-          : "border-border hover:border-primary/50"
+        'cursor-pointer rounded-lg border p-4 transition-all',
+        isSelected
+          ? 'border-primary bg-primary/5'
+          : 'border-border hover:border-primary/50'
       )}
       onClick={() => selectQuote(quote.id)}
     >
-      <div className="flex items-center justify-between mb-2">
+      <div className="mb-2 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="font-semibold">{quote.aggregator}</div>
           {quote.priceImpact < 1 && (
-            <CheckCircleIcon className="w-4 h-4 text-green-600" />
+            <CheckCircleIcon className="h-4 w-4 text-green-600" />
           )}
         </div>
         <div className="text-sm text-muted-foreground">
@@ -450,7 +509,7 @@ export default function TradingPanel(): JSX.Element {
             onClick={() => setShowSettings(!showSettings)}
             className="btn btn-outline btn-sm"
           >
-            <SettingsIcon className="w-4 h-4" />
+            <SettingsIcon className="h-4 w-4" />
           </button>
         </div>
       </div>
@@ -459,42 +518,48 @@ export default function TradingPanel(): JSX.Element {
       <div className="card p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white text-sm font-semibold">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-primary to-secondary text-sm font-semibold text-white">
               {activeWallet.walletName?.[0] || 'W'}
             </div>
             <div>
               <div className="font-semibold">
-                {activeWallet.address.slice(0, 6)}...{activeWallet.address.slice(-4)}
+                {activeWallet.address.slice(0, 6)}...
+                {activeWallet.address.slice(-4)}
               </div>
               <div className="text-sm text-muted-foreground">
-                {activeChainType === 'solana' ? 'Solana' : `Chain ${activeWallet.chainId}`} • {activeWallet.walletName}
+                {activeChainType === 'solana'
+                  ? 'Solana'
+                  : `Chain ${activeWallet.chainId}`}{' '}
+                • {activeWallet.walletName}
               </div>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-green-500" />
+            <div className="h-2 w-2 rounded-full bg-green-500" />
             <span className="text-sm text-muted-foreground">Connected</span>
           </div>
         </div>
       </div>
 
       {/* Main Trading Interface */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Swap Interface */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="space-y-6 lg:col-span-2">
           <div className="card p-6">
             <div className="space-y-4">
               {/* From Token */}
-              {renderTokenSelector(fromToken, setFromToken, "From")}
-              
+              {renderTokenSelector(fromToken, setFromToken, 'From')}
+
               {/* Amount Input */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground">Amount</label>
+                <label className="text-sm font-medium text-muted-foreground">
+                  Amount
+                </label>
                 <input
                   type="number"
                   value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
+                  onChange={e => setAmount(e.target.value)}
                   placeholder="0.0"
                   className="input w-full text-lg"
                 />
@@ -506,12 +571,12 @@ export default function TradingPanel(): JSX.Element {
                   onClick={swapTokens}
                   className="btn btn-outline btn-sm rounded-full p-2"
                 >
-                  <ArrowUpDownIcon className="w-4 h-4" />
+                  <ArrowUpDownIcon className="h-4 w-4" />
                 </button>
               </div>
 
               {/* To Token */}
-              {renderTokenSelector(toToken, setToToken, "To")}
+              {renderTokenSelector(toToken, setToToken, 'To')}
 
               {/* Quotes */}
               {quotes.length > 0 && (
@@ -523,15 +588,22 @@ export default function TradingPanel(): JSX.Element {
                       disabled={isLoadingQuotes}
                       className="btn btn-outline btn-sm"
                     >
-                      <RefreshCwIcon className={cn("w-4 h-4", isLoadingQuotes && "animate-spin")} />
+                      <RefreshCwIcon
+                        className={cn(
+                          'h-4 w-4',
+                          isLoadingQuotes && 'animate-spin'
+                        )}
+                      />
                       Refresh
                     </button>
                   </div>
-                  
+
                   <div className="space-y-2">
-                    {quotes.slice(0, 3).map(quote => 
-                      renderQuoteCard(quote, quote.id === selectedQuote?.id)
-                    )}
+                    {quotes
+                      .slice(0, 3)
+                      .map((quote: SwapQuote) =>
+                        renderQuoteCard(quote, quote.id === selectedQuote?.id)
+                      )}
                   </div>
                 </div>
               )}
@@ -551,13 +623,13 @@ export default function TradingPanel(): JSX.Element {
         {/* AI Assistant Panel */}
         <div className="space-y-6">
           <div className="card p-6">
-            <div className="flex items-center justify-between mb-4">
+            <div className="mb-4 flex items-center justify-between">
               <h3 className="font-semibold">AI Trading Assistant</h3>
               <button
                 onClick={() => setShowAiPanel(!showAiPanel)}
                 className="btn btn-outline btn-sm"
               >
-                <ZapIcon className="w-4 h-4" />
+                <ZapIcon className="h-4 w-4" />
               </button>
             </div>
 
@@ -579,12 +651,19 @@ export default function TradingPanel(): JSX.Element {
                   {aiRecommendations.length > 0 && (
                     <div className="space-y-2">
                       {aiRecommendations.map((rec, index) => (
-                        <div key={rec.id} className="p-3 border border-border rounded-lg">
-                          <div className="flex items-center gap-2 mb-1">
-                            <InfoIcon className="w-4 h-4 text-blue-600" />
-                            <span className="font-medium text-sm">{rec.type.toUpperCase()}</span>
+                        <div
+                          key={rec.id}
+                          className="rounded-lg border border-border p-3"
+                        >
+                          <div className="mb-1 flex items-center gap-2">
+                            <InfoIcon className="h-4 w-4 text-blue-600" />
+                            <span className="text-sm font-medium">
+                              {rec.type.toUpperCase()}
+                            </span>
                           </div>
-                          <p className="text-sm text-muted-foreground">{rec.reasoning}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {rec.reasoning}
+                          </p>
                         </div>
                       ))}
                     </div>
@@ -605,8 +684,8 @@ export default function TradingPanel(): JSX.Element {
             exit={{ opacity: 0, height: 0 }}
             className="card p-6"
           >
-            <h3 className="font-semibold mb-4">Trading Settings</h3>
-            
+            <h3 className="mb-4 font-semibold">Trading Settings</h3>
+
             <div className="space-y-4">
               <div>
                 <label className="text-sm font-medium text-muted-foreground">
@@ -618,10 +697,10 @@ export default function TradingPanel(): JSX.Element {
                   max="5"
                   step="0.1"
                   value={slippage}
-                  onChange={(e) => setSlippage(parseFloat(e.target.value))}
-                  className="w-full mt-2"
+                  onChange={e => setSlippage(parseFloat(e.target.value))}
+                  className="mt-2 w-full"
                 />
-                <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                <div className="mt-1 flex justify-between text-xs text-muted-foreground">
                   <span>0.1%</span>
                   <span>5%</span>
                 </div>

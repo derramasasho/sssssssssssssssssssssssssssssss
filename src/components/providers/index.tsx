@@ -1,7 +1,12 @@
 'use client';
 
+import React, { Component, ErrorInfo } from 'react';
 import { WagmiConfig } from 'wagmi';
-import { RainbowKitProvider, getDefaultWallets, connectorsForWallets } from '@rainbow-me/rainbowkit';
+import {
+  RainbowKitProvider,
+  getDefaultWallets,
+  connectorsForWallets,
+} from '@rainbow-me/rainbowkit';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from 'next-themes';
 import { wagmiConfig, chains } from '@/lib/wagmi';
@@ -23,7 +28,7 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60 * 5, // 5 minutes
-      cacheTime: 1000 * 60 * 10, // 10 minutes
+      gcTime: 1000 * 60 * 10, // 10 minutes
       refetchOnWindowFocus: false,
       retry: (failureCount, error) => {
         // Don't retry on 4xx errors except 429 (rate limit)
@@ -60,12 +65,15 @@ const rainbowKitTheme = {
     closeButtonBackground: 'rgba(255, 255, 255, 0.08)',
     connectButtonBackground: '#0ea5e9',
     connectButtonBackgroundError: '#ef4444',
-    connectButtonInnerBackground: 'linear-gradient(0deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.15))',
+    connectButtonInnerBackground:
+      'linear-gradient(0deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.15))',
     connectButtonText: '#ffffff',
     connectButtonTextError: '#ffffff',
     connectionIndicator: '#22c55e',
-    downloadBottomCardBackground: 'linear-gradient(126deg, rgba(255, 255, 255, 0.2) 9.49%, rgba(171, 171, 171, 0.04) 71.04%), #1e293b',
-    downloadTopCardBackground: 'linear-gradient(126deg, rgba(171, 171, 171, 0.2) 9.49%, rgba(255, 255, 255, 0.04) 71.04%), #0f172a',
+    downloadBottomCardBackground:
+      'linear-gradient(126deg, rgba(255, 255, 255, 0.2) 9.49%, rgba(171, 171, 171, 0.04) 71.04%), #1e293b',
+    downloadTopCardBackground:
+      'linear-gradient(126deg, rgba(171, 171, 171, 0.2) 9.49%, rgba(255, 255, 255, 0.04) 71.04%), #0f172a',
     error: '#ef4444',
     generalBorder: 'rgba(255, 255, 255, 0.08)',
     generalBorderDim: 'rgba(255, 255, 255, 0.04)',
@@ -111,7 +119,7 @@ interface ErrorBoundaryState {
   error?: Error;
 }
 
-class ErrorBoundary extends React.Component<
+class ErrorBoundary extends Component<
   { children: React.ReactNode },
   ErrorBoundaryState
 > {
@@ -126,7 +134,7 @@ class ErrorBoundary extends React.Component<
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error('App Error Boundary caught an error:', error, errorInfo);
-    
+
     // Log to external error tracking service
     if (process.env.NODE_ENV === 'production') {
       // Example: Sentry.captureException(error);
@@ -136,12 +144,12 @@ class ErrorBoundary extends React.Component<
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-dark-950">
-          <div className="max-w-md w-full mx-4">
+        <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-dark-950">
+          <div className="mx-4 w-full max-w-md">
             <div className="card text-center">
-              <div className="w-16 h-16 mx-auto mb-4 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100 dark:bg-red-900">
                 <svg
-                  className="w-8 h-8 text-red-600 dark:text-red-400"
+                  className="h-8 w-8 text-red-600 dark:text-red-400"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -154,11 +162,12 @@ class ErrorBoundary extends React.Component<
                   />
                 </svg>
               </div>
-              <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+              <h1 className="mb-2 text-xl font-semibold text-gray-900 dark:text-gray-100">
                 Something went wrong
               </h1>
-              <p className="text-gray-600 dark:text-gray-400 mb-6">
-                We apologize for the inconvenience. Please refresh the page to try again.
+              <p className="mb-6 text-gray-600 dark:text-gray-400">
+                We apologize for the inconvenience. Please refresh the page to
+                try again.
               </p>
               <button
                 onClick={() => window.location.reload()}
@@ -203,21 +212,18 @@ export function Providers({ children }: ProvidersProps) {
             >
               <SolanaProvider>
                 <SettingsProvider>
-                <NotificationProvider>
-                  <PortfolioProvider>
-                    <TradingProvider>
-                      {children}
-                      {process.env.NODE_ENV === 'development' && (
-                        <ReactQueryDevtools
-                          initialIsOpen={false}
-                          position="bottom-right"
-                        />
-                      )}
-                    </TradingProvider>
-                  </PortfolioProvider>
-                </NotificationProvider>
-              </SettingsProvider>
-            </SolanaProvider>
+                  <NotificationProvider>
+                    <PortfolioProvider>
+                      <TradingProvider>
+                        {children}
+                        {process.env.NODE_ENV === 'development' && (
+                          <ReactQueryDevtools initialIsOpen={false} />
+                        )}
+                      </TradingProvider>
+                    </PortfolioProvider>
+                  </NotificationProvider>
+                </SettingsProvider>
+              </SolanaProvider>
             </RainbowKitProvider>
           </WagmiConfig>
         </QueryClientProvider>
@@ -232,14 +238,14 @@ export function Providers({ children }: ProvidersProps) {
 
 if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
   // Add performance monitoring in development
-  const observer = new PerformanceObserver((list) => {
+  const observer = new PerformanceObserver(list => {
     for (const entry of list.getEntries()) {
       if (entry.entryType === 'measure') {
         console.log(`Performance: ${entry.name} took ${entry.duration}ms`);
       }
     }
   });
-  
+
   observer.observe({ entryTypes: ['measure'] });
 }
 

@@ -4,25 +4,25 @@ const nextConfig = {
   swcMinify: true,
   experimental: {
     optimizeCss: true,
-    scrollRestoration: true
+    scrollRestoration: true,
   },
-  
+
   // Performance optimizations
   compiler: {
-    removeConsole: process.env.NODE_ENV === 'production'
+    removeConsole: process.env.NODE_ENV === 'production',
   },
-  
+
   // Image optimization
   images: {
     domains: [
       'assets.coingecko.com',
       'raw.githubusercontent.com',
       'logos.covalenthq.com',
-      'wallet-asset.matic.network'
+      'wallet-asset.matic.network',
     ],
-    formats: ['image/webp', 'image/avif']
+    formats: ['image/webp', 'image/avif'],
   },
-  
+
   // Security headers
   async headers() {
     return [
@@ -31,35 +31,36 @@ const nextConfig = {
         headers: [
           {
             key: 'X-Frame-Options',
-            value: 'DENY'
+            value: 'DENY',
           },
           {
             key: 'X-Content-Type-Options',
-            value: 'nosniff'
+            value: 'nosniff',
           },
           {
             key: 'Referrer-Policy',
-            value: 'strict-origin-when-cross-origin'
+            value: 'strict-origin-when-cross-origin',
           },
           {
             key: 'Content-Security-Policy',
-            value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; connect-src 'self' https:;"
-          }
-        ]
-      }
-    ]
+            value:
+              "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; connect-src 'self' https:;",
+          },
+        ],
+      },
+    ];
   },
-  
+
   // Bundle analyzer
   ...(process.env.ANALYZE === 'true' && {
     webpack: (config, { isServer }) => {
       if (!isServer) {
-        const { BundleAnalyzerPlugin } = require('@next/bundle-analyzer')()
-        config.plugins.push(new BundleAnalyzerPlugin())
+        const { BundleAnalyzerPlugin } = require('@next/bundle-analyzer')();
+        config.plugins.push(new BundleAnalyzerPlugin());
       }
-      return config
-    }
-  })
-}
+      return config;
+    },
+  }),
+};
 
-module.exports = nextConfig
+module.exports = nextConfig;

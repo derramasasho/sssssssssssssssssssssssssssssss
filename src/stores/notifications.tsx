@@ -19,18 +19,20 @@ export interface NotificationState {
 
 export interface NotificationActions {
   // Notification management
-  addNotification: (notification: Omit<Notification, 'id' | 'createdAt'>) => void;
+  addNotification: (
+    notification: Omit<Notification, 'id' | 'createdAt'>
+  ) => void;
   markAsRead: (notificationId: string) => void;
   markAllAsRead: () => void;
   removeNotification: (notificationId: string) => void;
   clearNotifications: () => void;
-  
+
   // Price alert management
   addPriceAlert: (alert: Omit<PriceAlert, 'id' | 'createdAt'>) => void;
   updatePriceAlert: (alertId: string, updates: Partial<PriceAlert>) => void;
   removePriceAlert: (alertId: string) => void;
   togglePriceAlert: (alertId: string) => void;
-  
+
   // Actions
   checkPriceAlerts: (prices: Record<string, number>) => void;
   setLoading: (loading: boolean) => void;
@@ -59,27 +61,29 @@ const useNotificationStore = create<NotificationStore>()(
   persist(
     (set, get) => ({
       ...initialState,
-      
+
       // Notification management
-      addNotification: (notificationData) => {
+      addNotification: notificationData => {
         const notification: Notification = {
           id: `notification_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           createdAt: new Date(),
-          isRead: false,
           ...notificationData,
+          isRead: false,
         };
-        
-        set((state) => ({
+
+        set(state => ({
           notifications: [notification, ...state.notifications],
           unreadCount: state.unreadCount + 1,
         }));
       },
-      
-      markAsRead: (notificationId) => {
-        set((state) => {
-          const notification = state.notifications.find(n => n.id === notificationId);
+
+      markAsRead: notificationId => {
+        set(state => {
+          const notification = state.notifications.find(
+            n => n.id === notificationId
+          );
           if (!notification || notification.isRead) return state;
-          
+
           return {
             notifications: state.notifications.map(n =>
               n.id === notificationId ? { ...n, isRead: true } : n
@@ -88,43 +92,47 @@ const useNotificationStore = create<NotificationStore>()(
           };
         });
       },
-      
+
       markAllAsRead: () => {
-        set((state) => ({
+        set(state => ({
           notifications: state.notifications.map(n => ({ ...n, isRead: true })),
           unreadCount: 0,
         }));
       },
-      
-      removeNotification: (notificationId) => {
-        set((state) => {
-          const notification = state.notifications.find(n => n.id === notificationId);
+
+      removeNotification: notificationId => {
+        set(state => {
+          const notification = state.notifications.find(
+            n => n.id === notificationId
+          );
           const unreadDecrement = notification && !notification.isRead ? 1 : 0;
-          
+
           return {
-            notifications: state.notifications.filter(n => n.id !== notificationId),
+            notifications: state.notifications.filter(
+              n => n.id !== notificationId
+            ),
             unreadCount: Math.max(0, state.unreadCount - unreadDecrement),
           };
         });
       },
-      
+
       clearNotifications: () => {
         set({ notifications: [], unreadCount: 0 });
       },
-      
+
       // Price alert management
-      addPriceAlert: (alertData) => {
+      addPriceAlert: alertData => {
         const alert: PriceAlert = {
           id: `alert_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           createdAt: new Date(),
-          isActive: true,
           ...alertData,
+          isActive: true,
         };
-        
-        set((state) => ({
+
+        set(state => ({
           priceAlerts: [...state.priceAlerts, alert],
         }));
-        
+
         // Add confirmation notification
         get().addNotification({
           userId: alertData.userId,
@@ -132,43 +140,48 @@ const useNotificationStore = create<NotificationStore>()(
           title: 'Price Alert Created',
           message: `Alert set for ${alertData.token.symbol} at $${alertData.value}`,
           priority: 'low',
+          isRead: false,
         });
       },
-      
+
       updatePriceAlert: (alertId, updates) => {
-        set((state) => ({
+        set(state => ({
           priceAlerts: state.priceAlerts.map(alert =>
             alert.id === alertId ? { ...alert, ...updates } : alert
           ),
         }));
       },
-      
-      removePriceAlert: (alertId) => {
-        set((state) => ({
+
+      removePriceAlert: alertId => {
+        set(state => ({
           priceAlerts: state.priceAlerts.filter(alert => alert.id !== alertId),
         }));
       },
-      
-      togglePriceAlert: (alertId) => {
-        set((state) => ({
+
+      togglePriceAlert: alertId => {
+        set(state => ({
           priceAlerts: state.priceAlerts.map(alert =>
-            alert.id === alertId ? { ...alert, isActive: !alert.isActive } : alert
+            alert.id === alertId
+              ? { ...alert, isActive: !alert.isActive }
+              : alert
           ),
         }));
       },
-      
+
       // Actions
-      checkPriceAlerts: (prices) => {
+      checkPriceAlerts: prices => {
         const state = get();
-        const activeAlerts = state.priceAlerts.filter(alert => alert.isActive && !alert.triggeredAt);
-        
+        const activeAlerts = state.priceAlerts.filter(
+          alert => alert.isActive && !alert.triggeredAt
+        );
+
         activeAlerts.forEach(alert => {
           const currentPrice = prices[alert.tokenId];
           if (!currentPrice) return;
-          
+
           let triggered = false;
           let message = '';
-          
+
           switch (alert.condition) {
             case 'above':
               if (currentPrice >= alert.value) {
@@ -187,14 +200,14 @@ const useNotificationStore = create<NotificationStore>()(
               // For now, we'll skip this implementation
               break;
           }
-          
+
           if (triggered) {
             // Mark alert as triggered
-            get().updatePriceAlert(alert.id, { 
+            get().updatePriceAlert(alert.id, {
               triggeredAt: new Date(),
               isActive: false,
             });
-            
+
             // Send notification
             get().addNotification({
               userId: alert.userId,
@@ -202,6 +215,7 @@ const useNotificationStore = create<NotificationStore>()(
               title: 'Price Alert Triggered',
               message,
               priority: 'high',
+              isRead: false,
               metadata: {
                 alertId: alert.id,
                 tokenId: alert.tokenId,
@@ -212,14 +226,14 @@ const useNotificationStore = create<NotificationStore>()(
           }
         });
       },
-      
-      setLoading: (loading) => set({ isLoading: loading }),
-      setError: (error) => set({ error, isLoading: false }),
+
+      setLoading: loading => set({ isLoading: loading }),
+      setError: error => set({ error, isLoading: false }),
     }),
     {
       name: 'defi-notifications-state',
       storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({
+      partialize: state => ({
         notifications: state.notifications.slice(0, 100), // Keep last 100 notifications
         priceAlerts: state.priceAlerts,
         unreadCount: state.unreadCount,
@@ -255,20 +269,30 @@ export function useNotifications(): NotificationStore {
 }
 
 export function useNotificationList() {
-  const { notifications, unreadCount, markAsRead, markAllAsRead, removeNotification, clearNotifications } = useNotifications();
-  
-  const recentNotifications = React.useMemo(() => 
-    notifications.slice(0, 20), [notifications]
+  const {
+    notifications,
+    unreadCount,
+    markAsRead,
+    markAllAsRead,
+    removeNotification,
+    clearNotifications,
+  } = useNotifications();
+
+  const recentNotifications = React.useMemo(
+    () => notifications.slice(0, 20),
+    [notifications]
   );
-  
-  const unreadNotifications = React.useMemo(() => 
-    notifications.filter(n => !n.isRead), [notifications]
+
+  const unreadNotifications = React.useMemo(
+    () => notifications.filter(n => !n.isRead),
+    [notifications]
   );
-  
-  const highPriorityNotifications = React.useMemo(() => 
-    notifications.filter(n => n.priority === 'high' && !n.isRead), [notifications]
+
+  const highPriorityNotifications = React.useMemo(
+    () => notifications.filter(n => n.priority === 'high' && !n.isRead),
+    [notifications]
   );
-  
+
   return {
     notifications: recentNotifications,
     unreadNotifications,
@@ -284,23 +308,25 @@ export function useNotificationList() {
 }
 
 export function usePriceAlerts() {
-  const { 
-    priceAlerts, 
-    addPriceAlert, 
-    updatePriceAlert, 
-    removePriceAlert, 
+  const {
+    priceAlerts,
+    addPriceAlert,
+    updatePriceAlert,
+    removePriceAlert,
     togglePriceAlert,
-    checkPriceAlerts 
+    checkPriceAlerts,
   } = useNotifications();
-  
-  const activeAlerts = React.useMemo(() => 
-    priceAlerts.filter(alert => alert.isActive), [priceAlerts]
+
+  const activeAlerts = React.useMemo(
+    () => priceAlerts.filter(alert => alert.isActive),
+    [priceAlerts]
   );
-  
-  const triggeredAlerts = React.useMemo(() => 
-    priceAlerts.filter(alert => alert.triggeredAt), [priceAlerts]
+
+  const triggeredAlerts = React.useMemo(
+    () => priceAlerts.filter(alert => alert.triggeredAt),
+    [priceAlerts]
   );
-  
+
   return {
     alerts: priceAlerts,
     activeAlerts,
@@ -321,52 +347,68 @@ export function usePriceAlerts() {
 
 export function useNotificationUtils() {
   const { addNotification } = useNotifications();
-  
-  const notifyTradeSubmitted = React.useCallback((txHash: string, fromToken: string, toToken: string) => {
-    addNotification({
-      userId: 'current_user', // This would come from auth
-      type: 'trade_update',
-      title: 'Trade Submitted',
-      message: `Swapping ${fromToken} for ${toToken}`,
-      priority: 'medium',
-      metadata: { txHash, fromToken, toToken },
-    });
-  }, [addNotification]);
-  
-  const notifyTradeConfirmed = React.useCallback((txHash: string, fromToken: string, toToken: string) => {
-    addNotification({
-      userId: 'current_user',
-      type: 'trade_update',
-      title: 'Trade Confirmed',
-      message: `Successfully swapped ${fromToken} for ${toToken}`,
-      priority: 'medium',
-      metadata: { txHash, fromToken, toToken },
-    });
-  }, [addNotification]);
-  
-  const notifyTradeFailed = React.useCallback((txHash: string, reason: string) => {
-    addNotification({
-      userId: 'current_user',
-      type: 'trade_update',
-      title: 'Trade Failed',
-      message: reason || 'Transaction failed',
-      priority: 'high',
-      metadata: { txHash, reason },
-    });
-  }, [addNotification]);
-  
-  const notifyPortfolioUpdate = React.useCallback((change: number, changePercentage: number) => {
-    const isPositive = change > 0;
-    addNotification({
-      userId: 'current_user',
-      type: 'portfolio_change',
-      title: 'Portfolio Update',
-      message: `Portfolio ${isPositive ? 'gained' : 'lost'} $${Math.abs(change).toFixed(2)} (${Math.abs(changePercentage).toFixed(2)}%)`,
-      priority: 'low',
-      metadata: { change, changePercentage },
-    });
-  }, [addNotification]);
-  
+
+  const notifyTradeSubmitted = React.useCallback(
+    (txHash: string, fromToken: string, toToken: string) => {
+      addNotification({
+        userId: 'current_user', // This would come from auth
+        type: 'trade_update',
+        title: 'Trade Submitted',
+        message: `Swapping ${fromToken} for ${toToken}`,
+        priority: 'medium',
+        isRead: false,
+        metadata: { txHash, fromToken, toToken },
+      });
+    },
+    [addNotification]
+  );
+
+  const notifyTradeConfirmed = React.useCallback(
+    (txHash: string, fromToken: string, toToken: string) => {
+      addNotification({
+        userId: 'current_user',
+        type: 'trade_update',
+        title: 'Trade Confirmed',
+        message: `Successfully swapped ${fromToken} for ${toToken}`,
+        priority: 'medium',
+        isRead: false,
+        metadata: { txHash, fromToken, toToken },
+      });
+    },
+    [addNotification]
+  );
+
+  const notifyTradeFailed = React.useCallback(
+    (txHash: string, reason: string) => {
+      addNotification({
+        userId: 'current_user',
+        type: 'trade_update',
+        title: 'Trade Failed',
+        message: reason || 'Transaction failed',
+        priority: 'high',
+        isRead: false,
+        metadata: { txHash, reason },
+      });
+    },
+    [addNotification]
+  );
+
+  const notifyPortfolioUpdate = React.useCallback(
+    (change: number, changePercentage: number) => {
+      const isPositive = change > 0;
+      addNotification({
+        userId: 'current_user',
+        type: 'portfolio_change',
+        title: 'Portfolio Update',
+        message: `Portfolio ${isPositive ? 'gained' : 'lost'} $${Math.abs(change).toFixed(2)} (${Math.abs(changePercentage).toFixed(2)}%)`,
+        priority: 'low',
+        isRead: false,
+        metadata: { change, changePercentage },
+      });
+    },
+    [addNotification]
+  );
+
   return {
     notifyTradeSubmitted,
     notifyTradeConfirmed,
@@ -394,7 +436,9 @@ export function getNotificationIcon(type: Notification['type']): string {
   }
 }
 
-export function getNotificationColor(priority: Notification['priority']): string {
+export function getNotificationColor(
+  priority: Notification['priority']
+): string {
   switch (priority) {
     case 'high':
       return 'text-red-600 dark:text-red-400';
@@ -413,7 +457,7 @@ export function formatNotificationTime(date: Date): string {
   const diffMinutes = Math.floor(diffMs / (1000 * 60));
   const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  
+
   if (diffMinutes < 1) {
     return 'Just now';
   } else if (diffMinutes < 60) {

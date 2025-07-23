@@ -1,8 +1,15 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useAccount, useChainId, useDisconnect as useDisconnectEVM } from 'wagmi';
-import { useWallet as useSolanaWallet, useConnection } from '@solana/wallet-adapter-react';
+import {
+  useAccount,
+  useChainId,
+  useDisconnect as useDisconnectEVM,
+} from 'wagmi';
+import {
+  useWallet as useSolanaWallet,
+  useConnection,
+} from '@solana/wallet-adapter-react';
 import { PublicKey } from '@solana/web3.js';
 import { Address } from 'viem';
 
@@ -16,7 +23,7 @@ export interface WalletInfo {
   address: string;
   chainType: ChainType;
   chainId?: number;
-  walletName?: string;
+  walletName: string;
   isConnected: boolean;
 }
 
@@ -24,7 +31,7 @@ export interface MultiChainWalletState {
   // Current active wallet
   activeWallet: WalletInfo | null;
   activeChainType: ChainType | null;
-  
+
   // EVM wallet state
   evmWallet: {
     address: Address | undefined;
@@ -32,7 +39,7 @@ export interface MultiChainWalletState {
     isConnected: boolean;
     walletName?: string;
   };
-  
+
   // Solana wallet state
   solanaWallet: {
     address: string | null;
@@ -40,11 +47,11 @@ export interface MultiChainWalletState {
     isConnected: boolean;
     walletName?: string;
   };
-  
+
   // Connection states
   isConnecting: boolean;
   error: string | null;
-  
+
   // Available wallets
   hasEVMWallet: boolean;
   hasSolanaWallet: boolean;
@@ -56,14 +63,14 @@ export interface MultiChainWalletActions {
   switchToEVM: () => void;
   switchToSolana: () => void;
   switchChainType: (chainType: ChainType) => void;
-  
+
   // Wallet connection
   connectEVM: () => Promise<void>;
   connectSolana: () => Promise<void>;
   disconnectEVM: () => Promise<void>;
   disconnectSolana: () => Promise<void>;
   disconnectAll: () => Promise<void>;
-  
+
   // Utilities
   getActiveAddress: () => string | null;
   getActiveChainId: () => number | null;
@@ -75,42 +82,55 @@ export interface MultiChainWalletActions {
 // MULTI-CHAIN WALLET HOOK
 // =============================================================================
 
-export function useMultiChainWallet(): MultiChainWalletState & MultiChainWalletActions {
+export function useMultiChainWallet(): MultiChainWalletState &
+  MultiChainWalletActions {
   // EVM wallet hooks
-  const { address: evmAddress, isConnected: evmConnected, connector: evmConnector } = useAccount();
+  const {
+    address: evmAddress,
+    isConnected: evmConnected,
+    connector: evmConnector,
+  } = useAccount();
   const evmChainId = useChainId();
   const { disconnect: disconnectEVM } = useDisconnectEVM();
 
   // Solana wallet hooks
-  const { 
-    publicKey: solanaPublicKey, 
+  const {
+    publicKey: solanaPublicKey,
     connected: solanaConnected,
     wallet: solanaWallet,
     connect: connectSolanaWallet,
     disconnect: disconnectSolanaWallet,
-    connecting: solanaConnecting
+    connecting: solanaConnecting,
   } = useSolanaWallet();
   const { connection } = useConnection();
 
   // Local state
-  const [activeChainType, setActiveChainType] = useState<ChainType | null>(null);
+  const [activeChainType, setActiveChainType] = useState<ChainType | null>(
+    null
+  );
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Derived state
-  const evmWalletState = useMemo(() => ({
-    address: evmAddress,
-    chainId: evmChainId,
-    isConnected: evmConnected,
-    walletName: evmConnector?.name,
-  }), [evmAddress, evmChainId, evmConnected, evmConnector]);
+  const evmWalletState = useMemo(
+    () => ({
+      address: evmAddress,
+      chainId: evmChainId,
+      isConnected: evmConnected,
+      walletName: evmConnector?.name,
+    }),
+    [evmAddress, evmChainId, evmConnected, evmConnector]
+  );
 
-  const solanaWalletState = useMemo(() => ({
-    address: solanaPublicKey?.toString() || null,
-    publicKey: solanaPublicKey,
-    isConnected: solanaConnected,
-    walletName: solanaWallet?.adapter.name,
-  }), [solanaPublicKey, solanaConnected, solanaWallet]);
+  const solanaWalletState = useMemo(
+    () => ({
+      address: solanaPublicKey?.toString() || null,
+      publicKey: solanaPublicKey,
+      isConnected: solanaConnected,
+      walletName: solanaWallet?.adapter.name,
+    }),
+    [solanaPublicKey, solanaConnected, solanaWallet]
+  );
 
   const hasEVMWallet = evmWalletState.isConnected;
   const hasSolanaWallet = solanaWalletState.isConnected;
@@ -126,7 +146,7 @@ export function useMultiChainWallet(): MultiChainWalletState & MultiChainWalletA
           address: evmWalletState.address!,
           chainType: 'evm' as ChainType,
           chainId: evmWalletState.chainId,
-          walletName: evmWalletState.walletName,
+          walletName: evmWalletState.walletName || '',
           isConnected: true,
         };
       } else if (hasSolanaWallet && !hasEVMWallet) {
@@ -134,7 +154,7 @@ export function useMultiChainWallet(): MultiChainWalletState & MultiChainWalletA
         return {
           address: solanaWalletState.address!,
           chainType: 'solana' as ChainType,
-          walletName: solanaWalletState.walletName,
+          walletName: String(solanaWalletState.walletName) || '',
           isConnected: true,
         };
       } else if (hasBothWallets) {
@@ -144,7 +164,7 @@ export function useMultiChainWallet(): MultiChainWalletState & MultiChainWalletA
           address: evmWalletState.address!,
           chainType: 'evm' as ChainType,
           chainId: evmWalletState.chainId,
-          walletName: evmWalletState.walletName,
+          walletName: evmWalletState.walletName || '',
           isConnected: true,
         };
       }
@@ -157,20 +177,27 @@ export function useMultiChainWallet(): MultiChainWalletState & MultiChainWalletA
         address: evmWalletState.address!,
         chainType: 'evm' as ChainType,
         chainId: evmWalletState.chainId,
-        walletName: evmWalletState.walletName,
+        walletName: evmWalletState.walletName || '',
         isConnected: true,
       };
     } else if (activeChainType === 'solana' && hasSolanaWallet) {
       return {
         address: solanaWalletState.address!,
         chainType: 'solana' as ChainType,
-        walletName: solanaWalletState.walletName,
+        walletName: String(solanaWalletState.walletName) || '',
         isConnected: true,
       };
     }
 
     return null;
-  }, [activeChainType, hasEVMWallet, hasSolanaWallet, evmWalletState, solanaWalletState, hasBothWallets]);
+  }, [
+    activeChainType,
+    hasEVMWallet,
+    hasSolanaWallet,
+    evmWalletState,
+    solanaWalletState,
+    hasBothWallets,
+  ]);
 
   // ==========================================================================
   // WALLET CONNECTION ACTIONS
@@ -184,7 +211,9 @@ export function useMultiChainWallet(): MultiChainWalletState & MultiChainWalletA
       // This would trigger the wallet connection modal
       console.log('EVM connection should be handled by RainbowKit');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to connect EVM wallet');
+      setError(
+        err instanceof Error ? err.message : 'Failed to connect EVM wallet'
+      );
     } finally {
       setIsConnecting(false);
     }
@@ -197,7 +226,9 @@ export function useMultiChainWallet(): MultiChainWalletState & MultiChainWalletA
       await connectSolanaWallet();
       setActiveChainType('solana');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to connect Solana wallet');
+      setError(
+        err instanceof Error ? err.message : 'Failed to connect Solana wallet'
+      );
     } finally {
       setIsConnecting(false);
     }
@@ -210,7 +241,9 @@ export function useMultiChainWallet(): MultiChainWalletState & MultiChainWalletA
         setActiveChainType(hasSolanaWallet ? 'solana' : null);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to disconnect EVM wallet');
+      setError(
+        err instanceof Error ? err.message : 'Failed to disconnect EVM wallet'
+      );
     }
   }, [disconnectEVM, activeChainType, hasSolanaWallet]);
 
@@ -221,7 +254,11 @@ export function useMultiChainWallet(): MultiChainWalletState & MultiChainWalletA
         setActiveChainType(hasEVMWallet ? 'evm' : null);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to disconnect Solana wallet');
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Failed to disconnect Solana wallet'
+      );
     }
   }, [disconnectSolanaWallet, activeChainType, hasEVMWallet]);
 
@@ -234,7 +271,9 @@ export function useMultiChainWallet(): MultiChainWalletState & MultiChainWalletA
       ]);
       setActiveChainType(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to disconnect wallets');
+      setError(
+        err instanceof Error ? err.message : 'Failed to disconnect wallets'
+      );
     }
   }, [hasEVMWallet, hasSolanaWallet, disconnectEVM, disconnectSolanaWallet]);
 
@@ -260,13 +299,16 @@ export function useMultiChainWallet(): MultiChainWalletState & MultiChainWalletA
     }
   }, [hasSolanaWallet]);
 
-  const switchChainType = useCallback((chainType: ChainType) => {
-    if (chainType === 'evm') {
-      switchToEVM();
-    } else {
-      switchToSolana();
-    }
-  }, [switchToEVM, switchToSolana]);
+  const switchChainType = useCallback(
+    (chainType: ChainType) => {
+      if (chainType === 'evm') {
+        switchToEVM();
+      } else {
+        switchToSolana();
+      }
+    },
+    [switchToEVM, switchToSolana]
+  );
 
   // ==========================================================================
   // UTILITY FUNCTIONS
@@ -283,12 +325,15 @@ export function useMultiChainWallet(): MultiChainWalletState & MultiChainWalletA
     return null; // Solana doesn't have chainId concept
   }, [activeChainType, evmWalletState.chainId]);
 
-  const isWalletConnected = useCallback((chainType?: ChainType) => {
-    if (!chainType) {
-      return hasEVMWallet || hasSolanaWallet;
-    }
-    return chainType === 'evm' ? hasEVMWallet : hasSolanaWallet;
-  }, [hasEVMWallet, hasSolanaWallet]);
+  const isWalletConnected = useCallback(
+    (chainType?: ChainType) => {
+      if (!chainType) {
+        return hasEVMWallet || hasSolanaWallet;
+      }
+      return chainType === 'evm' ? hasEVMWallet : hasSolanaWallet;
+    },
+    [hasEVMWallet, hasSolanaWallet]
+  );
 
   const refresh = useCallback(async () => {
     setError(null);
@@ -334,8 +379,14 @@ export function useMultiChainWallet(): MultiChainWalletState & MultiChainWalletA
     // State
     activeWallet,
     activeChainType,
-    evmWallet: evmWalletState,
-    solanaWallet: solanaWalletState,
+    evmWallet: {
+      ...evmWalletState,
+      walletName: evmWalletState.walletName || '',
+    },
+    solanaWallet: {
+      ...solanaWalletState,
+      walletName: String(solanaWalletState.walletName) || '',
+    },
     isConnecting,
     error,
     hasEVMWallet,

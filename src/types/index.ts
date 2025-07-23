@@ -4,6 +4,8 @@ import { Address } from 'viem';
 // CORE TYPES
 // =============================================================================
 
+export type ChainType = 'evm' | 'solana';
+
 export interface User {
   id: string;
   address: Address;
@@ -33,8 +35,8 @@ export interface TokenBalance {
   balance: string;
   balanceFormatted: string;
   balanceUSD: number;
-  price?: number;
-  priceChange24h?: number;
+  price: number;
+  priceChange24h: number;
 }
 
 // =============================================================================
@@ -89,6 +91,7 @@ export interface SwapQuote {
   aggregator: string;
   slippage: number;
   validUntil: Date;
+  raw?: any; // Raw response data for swap execution
 }
 
 export interface RouteStep {
@@ -302,8 +305,8 @@ export interface PaginatedResponse<T> {
 // =============================================================================
 
 export interface SwapFormData {
-  fromToken?: Token;
-  toToken?: Token;
+  fromToken: Token | null;
+  toToken: Token | null;
   fromAmount: string;
   slippage: number;
   autoSlippage: boolean;
@@ -355,7 +358,7 @@ export interface AppError {
   timestamp: Date;
 }
 
-export type ErrorCode = 
+export type ErrorCode =
   | 'WALLET_NOT_CONNECTED'
   | 'INSUFFICIENT_BALANCE'
   | 'SLIPPAGE_TOO_HIGH'

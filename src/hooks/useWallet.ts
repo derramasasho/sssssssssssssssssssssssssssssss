@@ -1,6 +1,12 @@
 'use client';
 
-import { useAccount, useConnect, useDisconnect, useNetwork, useSwitchNetwork } from 'wagmi';
+import {
+  useAccount,
+  useConnect,
+  useDisconnect,
+  useNetwork,
+  useSwitchNetwork,
+} from 'wagmi';
 import { useConnectModal } from '@rainbow-me/rainbowkit';
 import { useCallback, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
@@ -49,25 +55,30 @@ export function useWallet(): UseWalletReturn {
     }
   }, [disconnect]);
 
-  const handleSwitchChain = useCallback(async (chainId: number) => {
-    try {
-      if (!isChainSupported(chainId)) {
-        throw new Error(`Unsupported chain: ${chainId}`);
-      }
+  const handleSwitchChain = useCallback(
+    async (chainId: number) => {
+      try {
+        if (!isChainSupported(chainId)) {
+          throw new Error(`Unsupported chain: ${chainId}`);
+        }
 
-      if (!switchNetwork) {
-        throw new Error('Chain switching not supported');
-      }
+        if (!switchNetwork) {
+          throw new Error('Chain switching not supported');
+        }
 
-      await switchNetwork(chainId);
-      
-      const networkName = NETWORK_LABELS[chainId] || `Chain ${chainId}`;
-      toast.success(`Switched to ${networkName}`);
-    } catch (error) {
-      console.error('Chain switch error:', error);
-      toast.error(`Failed to switch network: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }, [switchNetwork]);
+        await switchNetwork(chainId);
+
+        const networkName = NETWORK_LABELS[chainId] || `Chain ${chainId}`;
+        toast.success(`Switched to ${networkName}`);
+      } catch (error) {
+        console.error('Chain switch error:', error);
+        toast.error(
+          `Failed to switch network: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
+      }
+    },
+    [switchNetwork]
+  );
 
   // =============================================================================
   // CONNECTION STATUS MONITORING
@@ -82,7 +93,9 @@ export function useWallet(): UseWalletReturn {
   useEffect(() => {
     // Check if connected to unsupported network
     if (isConnected && chain && !isChainSupported(chain.id)) {
-      toast.error(`Unsupported network: ${chain.name}. Please switch to a supported network.`);
+      toast.error(
+        `Unsupported network: ${chain.name}. Please switch to a supported network.`
+      );
     }
   }, [isConnected, chain]);
 
@@ -113,18 +126,18 @@ export function useWallet(): UseWalletReturn {
     isConnected,
     isConnecting: isConnecting || isConnectLoading,
     isDisconnected,
-    
+
     // Network info
     chain: chain ? { id: chain.id, name: chain.name } : undefined,
-    
+
     // Actions
     connect: handleConnect,
     disconnect: handleDisconnect,
     switchChain: handleSwitchChain,
-    
+
     // Validation
     validateNetwork,
-    
+
     // Loading states
     isSwitchingChain: isSwitchLoading,
   } as UseWalletReturn & {
@@ -149,7 +162,7 @@ export function useIsWalletConnected() {
 
 export function useRequireWallet() {
   const { isConnected, connect } = useWallet();
-  
+
   const requireWallet = useCallback(async () => {
     if (!isConnected) {
       toast.error(ERROR_MESSAGES.WALLET_NOT_CONNECTED);
@@ -158,21 +171,24 @@ export function useRequireWallet() {
     }
     return true;
   }, [isConnected, connect]);
-  
+
   return requireWallet;
 }
 
 export function useWalletChain() {
   const { chain, switchChain } = useWallet();
-  
-  const requireChain = useCallback(async (chainId: number) => {
-    if (!chain || chain.id !== chainId) {
-      await switchChain(chainId);
-      return false;
-    }
-    return true;
-  }, [chain, switchChain]);
-  
+
+  const requireChain = useCallback(
+    async (chainId: number) => {
+      if (!chain || chain.id !== chainId) {
+        await switchChain(chainId);
+        return false;
+      }
+      return true;
+    },
+    [chain, switchChain]
+  );
+
   return {
     chain,
     switchChain,
@@ -186,15 +202,15 @@ export function useWalletChain() {
 
 export function useWalletConnectionStatus() {
   const { isConnected, isConnecting, isDisconnected } = useWallet();
-  
-  const status = isConnecting 
-    ? 'connecting' 
-    : isConnected 
-    ? 'connected' 
-    : isDisconnected 
-    ? 'disconnected' 
-    : 'idle';
-  
+
+  const status = isConnecting
+    ? 'connecting'
+    : isConnected
+      ? 'connected'
+      : isDisconnected
+        ? 'disconnected'
+        : 'idle';
+
   return {
     status,
     isConnecting,

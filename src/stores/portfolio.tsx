@@ -3,7 +3,13 @@
 import React, { createContext, useContext, ReactNode, useEffect } from 'react';
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { Portfolio, PortfolioPosition, Token, TokenBalance, PerformanceDataPoint } from '@/types';
+import {
+  Portfolio,
+  PortfolioPosition,
+  Token,
+  TokenBalance,
+  PerformanceDataPoint,
+} from '@/types';
 import { useWallet } from '@/hooks/useWallet';
 import { formatCurrency } from '@/utils/format';
 
@@ -21,6 +27,7 @@ export interface PortfolioState {
   performanceHistory: PerformanceDataPoint[];
   isLoading: boolean;
   lastUpdated: Date | null;
+  lastRefresh: Date | null;
   error: string | null;
 }
 
@@ -32,8 +39,10 @@ export interface PortfolioActions {
   addPerformancePoint: (point: PerformanceDataPoint) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
-  refreshPortfolio: () => Promise<void>;
+  refreshPortfolio: (address?: string, chainId?: number) => Promise<void>;
+  loadPortfolio: (address: string, chainId: number) => Promise<void>;
   clearPortfolio: () => void;
+  lastRefresh: Date | null;
 }
 
 export type PortfolioStore = PortfolioState & PortfolioActions;
@@ -52,6 +61,7 @@ const initialState: PortfolioState = {
   performanceHistory: [],
   isLoading: false,
   lastUpdated: null,
+  lastRefresh: null,
   error: null,
 };
 
@@ -63,8 +73,8 @@ const usePortfolioStore = create<PortfolioStore>()(
   persist(
     (set, get) => ({
       ...initialState,
-      
-      setPortfolio: (portfolio) => {
+
+      setPortfolio: portfolio => {
         set({
           portfolio,
           positions: portfolio.positions,
@@ -76,24 +86,33 @@ const usePortfolioStore = create<PortfolioStore>()(
           error: null,
         });
       },
-      
-      updatePosition: (position) => {
-        set((state) => {
-          const existingIndex = state.positions.findIndex(p => p.id === position.id);
+
+      updatePosition: position => {
+        set(state => {
+          const existingIndex = state.positions.findIndex(
+            p => p.id === position.id
+          );
           let newPositions;
-          
+
           if (existingIndex >= 0) {
             newPositions = [...state.positions];
             newPositions[existingIndex] = position;
           } else {
             newPositions = [...state.positions, position];
           }
-          
+
           // Recalculate totals
-          const totalValueUSD = newPositions.reduce((sum, p) => sum + p.balanceUSD, 0);
-          const totalPnlUSD = newPositions.reduce((sum, p) => sum + (p.pnl || 0), 0);
-          const totalPnlPercentage = totalValueUSD > 0 ? (totalPnlUSD / totalValueUSD) * 100 : 0;
-          
+          const totalValueUSD = newPositions.reduce(
+            (sum, p) => sum + p.balanceUSD,
+            0
+          );
+          const totalPnlUSD = newPositions.reduce(
+            (sum, p) => sum + (p.pnl || 0),
+            0
+          );
+          const totalPnlPercentage =
+            totalValueUSD > 0 ? (totalPnlUSD / totalValueUSD) * 100 : 0;
+
           return {
             ...state,
             positions: newPositions,
@@ -104,16 +123,23 @@ const usePortfolioStore = create<PortfolioStore>()(
           };
         });
       },
-      
-      removePosition: (positionId) => {
-        set((state) => {
+
+      removePosition: positionId => {
+        set(state => {
           const newPositions = state.positions.filter(p => p.id !== positionId);
-          
+
           // Recalculate totals
-          const totalValueUSD = newPositions.reduce((sum, p) => sum + p.balanceUSD, 0);
-          const totalPnlUSD = newPositions.reduce((sum, p) => sum + (p.pnl || 0), 0);
-          const totalPnlPercentage = totalValueUSD > 0 ? (totalPnlUSD / totalValueUSD) * 100 : 0;
-          
+          const totalValueUSD = newPositions.reduce(
+            (sum, p) => sum + p.balanceUSD,
+            0
+          );
+          const totalPnlUSD = newPositions.reduce(
+            (sum, p) => sum + (p.pnl || 0),
+            0
+          );
+          const totalPnlPercentage =
+            totalValueUSD > 0 ? (totalPnlUSD / totalValueUSD) * 100 : 0;
+
           return {
             ...state,
             positions: newPositions,
@@ -124,38 +150,38 @@ const usePortfolioStore = create<PortfolioStore>()(
           };
         });
       },
-      
-      updateBalances: (balances) => {
-        set((state) => ({
+
+      updateBalances: balances => {
+        set(state => ({
           ...state,
           balances,
           totalValueUSD: balances.reduce((sum, b) => sum + b.balanceUSD, 0),
           lastUpdated: new Date(),
         }));
       },
-      
-      addPerformancePoint: (point) => {
-        set((state) => ({
+
+      addPerformancePoint: point => {
+        set(state => ({
           ...state,
           performanceHistory: [...state.performanceHistory, point].slice(-1000), // Keep last 1000 points
         }));
       },
-      
-      setLoading: (loading) => set({ isLoading: loading }),
-      
-      setError: (error) => set({ error, isLoading: false }),
-      
-      refreshPortfolio: async () => {
+
+      setLoading: loading => set({ isLoading: loading }),
+
+      setError: error => set({ error, isLoading: false }),
+
+      refreshPortfolio: async (address?, chainId?) => {
         const state = get();
         if (state.isLoading) return;
-        
+
         set({ isLoading: true, error: null });
-        
+
         try {
           // This would typically call an API to refresh portfolio data
           // For now, we'll simulate the refresh
           await new Promise(resolve => setTimeout(resolve, 1000));
-          
+
           // Add current state as performance point
           const now = new Date();
           const performancePoint: PerformanceDataPoint = {
@@ -164,27 +190,36 @@ const usePortfolioStore = create<PortfolioStore>()(
             pnlUSD: state.totalPnlUSD,
             pnlPercentage: state.totalPnlPercentage,
           };
-          
-          set((state) => ({
+
+          set(state => ({
             ...state,
             performanceHistory: [...state.performanceHistory, performancePoint],
             lastUpdated: now,
+            lastRefresh: now,
             isLoading: false,
           }));
         } catch (error) {
-          set({ 
-            error: error instanceof Error ? error.message : 'Failed to refresh portfolio',
-            isLoading: false 
+          set({
+            error:
+              error instanceof Error
+                ? error.message
+                : 'Failed to refresh portfolio',
+            isLoading: false,
           });
         }
       },
-      
+
+      loadPortfolio: async (address: string, chainId: number) => {
+        // This is just an alias for refreshPortfolio to maintain compatibility
+        return get().refreshPortfolio(address, chainId);
+      },
+
       clearPortfolio: () => set(initialState),
     }),
     {
       name: 'defi-portfolio-state',
       storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({
+      partialize: state => ({
         portfolio: state.portfolio,
         positions: state.positions,
         balances: state.balances,
@@ -211,21 +246,21 @@ interface PortfolioProviderProps {
 export function PortfolioProvider({ children }: PortfolioProviderProps) {
   const { address, isConnected } = useWallet();
   const portfolioStore = usePortfolioStore();
-  
+
   // Clear portfolio when wallet disconnects
   useEffect(() => {
     if (!isConnected) {
       portfolioStore.clearPortfolio();
     }
   }, [isConnected, portfolioStore]);
-  
+
   // Auto-refresh portfolio when address changes
   useEffect(() => {
     if (isConnected && address) {
       portfolioStore.refreshPortfolio();
     }
   }, [address, isConnected, portfolioStore]);
-  
+
   return (
     <PortfolioContext.Provider value={portfolioStore}>
       {children}
@@ -243,7 +278,7 @@ export function usePortfolio(): PortfolioStore {
 
 export function usePortfolioPositions() {
   const { positions, isLoading, error } = usePortfolio();
-  
+
   return {
     positions,
     isLoading,
@@ -254,8 +289,9 @@ export function usePortfolioPositions() {
 }
 
 export function usePortfolioValue() {
-  const { totalValueUSD, totalPnlUSD, totalPnlPercentage, isLoading } = usePortfolio();
-  
+  const { totalValueUSD, totalPnlUSD, totalPnlPercentage, isLoading } =
+    usePortfolio();
+
   return {
     totalValueUSD,
     totalPnlUSD,
@@ -270,14 +306,14 @@ export function usePortfolioValue() {
 
 export function usePortfolioPerformance() {
   const { performanceHistory, isLoading } = usePortfolio();
-  
+
   const chartData = performanceHistory.map(point => ({
     timestamp: point.timestamp,
     value: point.totalValueUSD,
     pnl: point.pnlUSD,
     pnlPercentage: point.pnlPercentage,
   }));
-  
+
   return {
     performanceHistory,
     chartData,
@@ -288,9 +324,11 @@ export function usePortfolioPerformance() {
 
 export function useTokenBalances() {
   const { balances, isLoading, error } = usePortfolio();
-  
-  const sortedBalances = [...balances].sort((a, b) => b.balanceUSD - a.balanceUSD);
-  
+
+  const sortedBalances = [...balances].sort(
+    (a, b) => b.balanceUSD - a.balanceUSD
+  );
+
   return {
     balances: sortedBalances,
     isLoading,
@@ -306,7 +344,7 @@ export function useTokenBalances() {
 
 export function usePortfolioAnalytics() {
   const { positions, performanceHistory } = usePortfolio();
-  
+
   const analytics = React.useMemo(() => {
     if (positions.length === 0) {
       return {
@@ -318,42 +356,60 @@ export function usePortfolioAnalytics() {
         volatility: 0,
       };
     }
-    
+
     // Calculate diversification score (0-100)
     const totalValue = positions.reduce((sum, p) => sum + p.balanceUSD, 0);
     const largestAllocation = Math.max(...positions.map(p => p.allocation));
     const diversificationScore = Math.max(0, 100 - largestAllocation);
-    
+
     // Find best and worst performers
-    const performersWithPnl = positions.filter(p => p.pnlPercentage !== undefined);
-    const bestPerformer = performersWithPnl.reduce((best, current) => 
-      (current.pnlPercentage || 0) > (best?.pnlPercentage || -Infinity) ? current : best
+    const performersWithPnl = positions.filter(
+      p => p.pnlPercentage !== undefined
     );
-    const worstPerformer = performersWithPnl.reduce((worst, current) => 
-      (current.pnlPercentage || 0) < (worst?.pnlPercentage || Infinity) ? current : worst
+    const bestPerformer = performersWithPnl.reduce((best, current) =>
+      (current.pnlPercentage || 0) > (best?.pnlPercentage || -Infinity)
+        ? current
+        : best
     );
-    
+    const worstPerformer = performersWithPnl.reduce((worst, current) =>
+      (current.pnlPercentage || 0) < (worst?.pnlPercentage || Infinity)
+        ? current
+        : worst
+    );
+
     // Calculate average return
-    const averageReturn = performersWithPnl.length > 0 
-      ? performersWithPnl.reduce((sum, p) => sum + (p.pnlPercentage || 0), 0) / performersWithPnl.length
-      : 0;
-    
+    const averageReturn =
+      performersWithPnl.length > 0
+        ? performersWithPnl.reduce(
+            (sum, p) => sum + (p.pnlPercentage || 0),
+            0
+          ) / performersWithPnl.length
+        : 0;
+
     // Calculate volatility from performance history
     let volatility = 0;
     if (performanceHistory.length > 1) {
       const returns = performanceHistory.slice(1).map((point, index) => {
-        const prevValue = performanceHistory[index].totalValueUSD;
-        return prevValue > 0 ? (point.totalValueUSD - prevValue) / prevValue : 0;
+        const prevValue = performanceHistory[index]?.totalValueUSD || 0;
+        return prevValue > 0
+          ? (point.totalValueUSD - prevValue) / prevValue
+          : 0;
       });
-      
-      const meanReturn = returns.reduce((sum, r) => sum + r, 0) / returns.length;
-      const variance = returns.reduce((sum, r) => sum + Math.pow(r - meanReturn, 2), 0) / returns.length;
+
+      const meanReturn =
+        returns.reduce((sum, r) => sum + r, 0) / returns.length;
+      const variance =
+        returns.reduce((sum, r) => sum + Math.pow(r - meanReturn, 2), 0) /
+        returns.length;
       volatility = Math.sqrt(variance) * 100; // Convert to percentage
     }
-    
+
     // Calculate risk score (0-100, higher = riskier)
-    const riskScore = Math.min(100, volatility * 10 + (100 - diversificationScore) * 0.5);
-    
+    const riskScore = Math.min(
+      100,
+      volatility * 10 + (100 - diversificationScore) * 0.5
+    );
+
     return {
       diversificationScore,
       riskScore,
@@ -363,7 +419,7 @@ export function usePortfolioAnalytics() {
       volatility,
     };
   }, [positions, performanceHistory]);
-  
+
   return analytics;
 }
 
@@ -372,38 +428,46 @@ export function usePortfolioAnalytics() {
 // =============================================================================
 
 export function usePortfolioUtils() {
-  const { updatePosition, removePosition, addPerformancePoint } = usePortfolio();
-  
-  const addToken = React.useCallback((token: Token, balance: string, price: number) => {
-    const balanceNum = parseFloat(balance);
-    const balanceUSD = balanceNum * price;
-    
-    const position: PortfolioPosition = {
-      id: `${token.address}_${Date.now()}`,
-      token,
-      balance,
-      balanceUSD,
-      currentPrice: price,
-      allocation: 0, // Will be calculated in updatePosition
-      lastUpdated: new Date(),
-    };
-    
-    updatePosition(position);
-  }, [updatePosition]);
-  
-  const recordPerformance = React.useCallback((totalValueUSD: number, pnlUSD: number) => {
-    const pnlPercentage = totalValueUSD > 0 ? (pnlUSD / totalValueUSD) * 100 : 0;
-    
-    const point: PerformanceDataPoint = {
-      timestamp: new Date(),
-      totalValueUSD,
-      pnlUSD,
-      pnlPercentage,
-    };
-    
-    addPerformancePoint(point);
-  }, [addPerformancePoint]);
-  
+  const { updatePosition, removePosition, addPerformancePoint } =
+    usePortfolio();
+
+  const addToken = React.useCallback(
+    (token: Token, balance: string, price: number) => {
+      const balanceNum = parseFloat(balance);
+      const balanceUSD = balanceNum * price;
+
+      const position: PortfolioPosition = {
+        id: `${token.address}_${Date.now()}`,
+        token,
+        balance,
+        balanceUSD,
+        currentPrice: price,
+        allocation: 0, // Will be calculated in updatePosition
+        lastUpdated: new Date(),
+      };
+
+      updatePosition(position);
+    },
+    [updatePosition]
+  );
+
+  const recordPerformance = React.useCallback(
+    (totalValueUSD: number, pnlUSD: number) => {
+      const pnlPercentage =
+        totalValueUSD > 0 ? (pnlUSD / totalValueUSD) * 100 : 0;
+
+      const point: PerformanceDataPoint = {
+        timestamp: new Date(),
+        totalValueUSD,
+        pnlUSD,
+        pnlPercentage,
+      };
+
+      addPerformancePoint(point);
+    },
+    [addPerformancePoint]
+  );
+
   return {
     addToken,
     removeToken: removePosition,

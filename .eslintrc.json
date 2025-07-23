@@ -23,5 +23,9 @@
     "no-console": "warn",
     "no-debugger": "error"
   },
-  "ignorePatterns": ["next.config.js", "tailwind.config.js", "postcss.config.js"]
+  "ignorePatterns": [
+    "next.config.js",
+    "tailwind.config.js",
+    "postcss.config.js"
+  ]
 }

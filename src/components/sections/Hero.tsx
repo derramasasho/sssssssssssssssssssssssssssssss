@@ -3,13 +3,13 @@
 import React from 'react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { motion } from 'framer-motion';
-import { 
-  ChartBarIcon, 
-  CurrencyDollarIcon, 
+import {
+  ChartBarIcon,
+  CurrencyDollarIcon,
   ShieldCheckIcon,
   SparklesIcon,
   ArrowRightIcon,
-  PlayIcon
+  PlayIcon,
 } from '@heroicons/react/24/outline';
 
 // =============================================================================
@@ -20,22 +20,26 @@ const features = [
   {
     icon: ChartBarIcon,
     title: 'Real-time Portfolio Tracking',
-    description: 'Monitor your DeFi positions across multiple protocols with live price updates and performance analytics.',
+    description:
+      'Monitor your DeFi positions across multiple protocols with live price updates and performance analytics.',
   },
   {
     icon: CurrencyDollarIcon,
     title: 'DEX Aggregation',
-    description: 'Get the best swap rates by comparing prices across all major decentralized exchanges.',
+    description:
+      'Get the best swap rates by comparing prices across all major decentralized exchanges.',
   },
   {
     icon: ShieldCheckIcon,
     title: 'Security First',
-    description: 'Non-custodial design means your funds never leave your wallet. Trade with confidence.',
+    description:
+      'Non-custodial design means your funds never leave your wallet. Trade with confidence.',
   },
   {
     icon: SparklesIcon,
     title: 'AI-Powered Insights',
-    description: 'Get intelligent portfolio recommendations and market insights powered by advanced AI.',
+    description:
+      'Get intelligent portfolio recommendations and market insights powered by advanced AI.',
   },
 ];
 
@@ -55,13 +59,13 @@ export function Hero() {
     <div className="relative overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-brand-50 via-purple-50 to-pink-50 dark:from-dark-950 dark:via-purple-950 dark:to-pink-950"></div>
-      
+
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden">
         {[...Array(20)].map((_, i) => (
           <motion.div
             key={i}
-            className="absolute w-2 h-2 bg-brand-400/20 rounded-full"
+            className="absolute h-2 w-2 rounded-full bg-brand-400/20"
             animate={{
               x: [0, 100, 0],
               y: [0, -100, 0],
@@ -70,7 +74,7 @@ export function Hero() {
             transition={{
               duration: 8 + i * 0.5,
               repeat: Infinity,
-              ease: "easeInOut",
+              ease: 'easeInOut',
             }}
             style={{
               left: `${Math.random() * 100}%`,
@@ -80,16 +84,16 @@ export function Hero() {
         ))}
       </div>
 
-      <div className="relative container mx-auto px-4 py-20 lg:py-32">
+      <div className="container relative mx-auto px-4 py-20 lg:py-32">
         {/* Main Hero Content */}
-        <div className="text-center max-w-4xl mx-auto">
+        <div className="mx-auto max-w-4xl text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             className="mb-8"
           >
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold leading-tight">
+            <h1 className="text-4xl font-bold leading-tight md:text-6xl lg:text-7xl">
               <span className="gradient-text">DeFi Portfolio</span>
               <br />
               <span className="text-gray-900 dark:text-gray-100">
@@ -102,11 +106,11 @@ export function Hero() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 mb-12 max-w-3xl mx-auto"
+            className="mx-auto mb-12 max-w-3xl text-xl text-gray-600 dark:text-gray-300 md:text-2xl"
           >
-            Track, trade, and optimize your DeFi investments with our 
-            ultra-modern platform. Get real-time analytics, AI insights, 
-            and seamless trading across all major protocols.
+            Track, trade, and optimize your DeFi investments with our
+            ultra-modern platform. Get real-time analytics, AI insights, and
+            seamless trading across all major protocols.
           </motion.p>
 
           {/* CTA Buttons */}
@@ -114,7 +118,7 @@ export function Hero() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16"
+            className="mb-16 flex flex-col items-center justify-center gap-4 sm:flex-row"
           >
             <ConnectButton.Custom>
               {({ openConnectModal }) => (
@@ -122,10 +126,10 @@ export function Hero() {
                   onClick={openConnectModal}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="btn-primary flex items-center space-x-2 text-lg px-8 py-4"
+                  className="btn-primary flex items-center space-x-2 px-8 py-4 text-lg"
                 >
                   <span>Connect Wallet</span>
-                  <ArrowRightIcon className="w-5 h-5" />
+                  <ArrowRightIcon className="h-5 w-5" />
                 </motion.button>
               )}
             </ConnectButton.Custom>
@@ -133,9 +137,9 @@ export function Hero() {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="btn-secondary flex items-center space-x-2 text-lg px-8 py-4"
+              className="btn-secondary flex items-center space-x-2 px-8 py-4 text-lg"
             >
-              <PlayIcon className="w-5 h-5" />
+              <PlayIcon className="h-5 w-5" />
               <span>Watch Demo</span>
             </motion.button>
           </motion.div>
@@ -145,7 +149,7 @@ export function Hero() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
-            className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-20"
+            className="mb-20 grid grid-cols-2 gap-8 md:grid-cols-4"
           >
             {stats.map((stat, index) => (
               <motion.div
@@ -155,7 +159,7 @@ export function Hero() {
                 transition={{ duration: 0.6, delay: 0.4 + index * 0.1 }}
                 className="text-center"
               >
-                <div className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+                <div className="mb-2 text-3xl font-bold text-gray-900 dark:text-gray-100 md:text-4xl">
                   {stat.value}
                 </div>
                 <div className="text-sm text-gray-600 dark:text-gray-400">
@@ -171,7 +175,7 @@ export function Hero() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.5 }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"
+          className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4"
         >
           {features.map((feature, index) => {
             const Icon = feature.icon;
@@ -184,13 +188,13 @@ export function Hero() {
                 whileHover={{ y: -5 }}
                 className="card-hover text-center"
               >
-                <div className="w-12 h-12 bg-gradient-to-br from-brand-500 to-purple-600 rounded-xl flex items-center justify-center mx-auto mb-4">
-                  <Icon className="w-6 h-6 text-white" />
+                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-purple-600">
+                  <Icon className="h-6 w-6 text-white" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                <h3 className="mb-2 text-lg font-semibold text-gray-900 dark:text-gray-100">
                   {feature.title}
                 </h3>
-                <p className="text-gray-600 dark:text-gray-400 text-sm">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
                   {feature.description}
                 </p>
               </motion.div>
@@ -203,14 +207,15 @@ export function Hero() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.8 }}
-          className="text-center mt-20"
+          className="mt-20 text-center"
         >
-          <div className="glass dark:glass-dark rounded-2xl p-8 max-w-2xl mx-auto">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+          <div className="mx-auto max-w-2xl rounded-2xl p-8 glass dark:glass-dark">
+            <h2 className="mb-4 text-2xl font-bold text-gray-900 dark:text-gray-100">
               Ready to optimize your DeFi journey?
             </h2>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
-              Join thousands of traders who trust our platform for their DeFi operations.
+            <p className="mb-6 text-gray-600 dark:text-gray-400">
+              Join thousands of traders who trust our platform for their DeFi
+              operations.
             </p>
             <ConnectButton.Custom>
               {({ openConnectModal }) => (
@@ -246,15 +251,15 @@ export function FloatingConnectButton() {
             whileTap={{ scale: 0.9 }}
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
-            transition={{ 
-              type: "spring", 
-              stiffness: 260, 
+            transition={{
+              type: 'spring',
+              stiffness: 260,
               damping: 20,
-              delay: 1 
+              delay: 1,
             }}
-            className="w-14 h-14 bg-gradient-to-r from-brand-500 to-brand-600 rounded-full shadow-lg shadow-brand-500/25 flex items-center justify-center text-white"
+            className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-r from-brand-500 to-brand-600 text-white shadow-lg shadow-brand-500/25"
           >
-            <CurrencyDollarIcon className="w-6 h-6" />
+            <CurrencyDollarIcon className="h-6 w-6" />
           </motion.button>
         )}
       </ConnectButton.Custom>
@@ -280,27 +285,27 @@ export function SocialProof() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.6, delay: 1 }}
-      className="py-12 border-t border-gray-200 dark:border-dark-700"
+      className="border-t border-gray-200 py-12 dark:border-dark-700"
     >
-      <div className="text-center mb-8">
-        <p className="text-sm text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+      <div className="mb-8 text-center">
+        <p className="text-sm uppercase tracking-wide text-gray-500 dark:text-gray-400">
           Integrated with leading DeFi protocols
         </p>
       </div>
-      <div className="flex flex-wrap justify-center items-center gap-8 opacity-60">
+      <div className="flex flex-wrap items-center justify-center gap-8 opacity-60">
         {logos.map((logo, index) => (
           <motion.div
             key={logo.name}
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.6, delay: 1.1 + index * 0.1 }}
-            className="filter grayscale hover:grayscale-0 transition-all duration-300"
+            className="grayscale filter transition-all duration-300 hover:grayscale-0"
           >
             <img
               src={logo.src}
               alt={logo.name}
               className="h-8 w-auto"
-              onError={(e) => {
+              onError={e => {
                 const target = e.target as HTMLImageElement;
                 target.style.display = 'none';
               }}

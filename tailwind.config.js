@@ -8,6 +8,41 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        // CSS Variables for theming
+        border: 'hsl(var(--border))',
+        input: 'hsl(var(--input))',
+        ring: 'hsl(var(--ring))',
+        background: 'hsl(var(--background))',
+        foreground: 'hsl(var(--foreground))',
+        primary: {
+          DEFAULT: 'hsl(var(--primary))',
+          foreground: 'hsl(var(--primary-foreground))',
+        },
+        secondary: {
+          DEFAULT: 'hsl(var(--secondary))',
+          foreground: 'hsl(var(--secondary-foreground))',
+        },
+        destructive: {
+          DEFAULT: 'hsl(var(--destructive))',
+          foreground: 'hsl(var(--destructive-foreground))',
+        },
+        muted: {
+          DEFAULT: 'hsl(var(--muted))',
+          foreground: 'hsl(var(--muted-foreground))',
+        },
+        accent: {
+          DEFAULT: 'hsl(var(--accent))',
+          foreground: 'hsl(var(--accent-foreground))',
+        },
+        popover: {
+          DEFAULT: 'hsl(var(--popover))',
+          foreground: 'hsl(var(--popover-foreground))',
+        },
+        card: {
+          DEFAULT: 'hsl(var(--card))',
+          foreground: 'hsl(var(--card-foreground))',
+        },
+
         // Custom brand colors
         brand: {
           50: '#f0f9ff',
@@ -20,26 +55,26 @@ module.exports = {
           700: '#0369a1',
           800: '#075985',
           900: '#0c4a6e',
-          950: '#082f49'
+          950: '#082f49',
         },
         // DeFi-specific colors
         success: {
           50: '#f0fdf4',
           500: '#22c55e',
           600: '#16a34a',
-          700: '#15803d'
+          700: '#15803d',
         },
         warning: {
           50: '#fffbeb',
           500: '#f59e0b',
           600: '#d97706',
-          700: '#b45309'
+          700: '#b45309',
         },
         danger: {
           50: '#fef2f2',
           500: '#ef4444',
           600: '#dc2626',
-          700: '#b91c1c'
+          700: '#b91c1c',
         },
         // Dark theme colors
         dark: {
@@ -53,20 +88,20 @@ module.exports = {
           700: '#334155',
           800: '#1e293b',
           900: '#0f172a',
-          950: '#020617'
-        }
+          950: '#020617',
+        },
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
-        mono: ['JetBrains Mono', 'Menlo', 'Monaco', 'monospace']
+        mono: ['JetBrains Mono', 'Menlo', 'Monaco', 'monospace'],
       },
       fontSize: {
-        '2xs': ['0.625rem', { lineHeight: '0.75rem' }]
+        '2xs': ['0.625rem', { lineHeight: '0.75rem' }],
       },
       spacing: {
-        '18': '4.5rem',
-        '88': '22rem',
-        '128': '32rem'
+        18: '4.5rem',
+        88: '22rem',
+        128: '32rem',
       },
       animation: {
         'fade-in': 'fadeIn 0.5s ease-in-out',
@@ -74,60 +109,67 @@ module.exports = {
         'slide-down': 'slideDown 0.3s ease-out',
         'scale-in': 'scaleIn 0.2s ease-out',
         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        'spin-slow': 'spin 3s linear infinite'
+        'spin-slow': 'spin 3s linear infinite',
       },
       keyframes: {
         fadeIn: {
           '0%': { opacity: '0' },
-          '100%': { opacity: '1' }
+          '100%': { opacity: '1' },
         },
         slideUp: {
           '0%': { transform: 'translateY(10px)', opacity: '0' },
-          '100%': { transform: 'translateY(0)', opacity: '1' }
+          '100%': { transform: 'translateY(0)', opacity: '1' },
         },
         slideDown: {
           '0%': { transform: 'translateY(-10px)', opacity: '0' },
-          '100%': { transform: 'translateY(0)', opacity: '1' }
+          '100%': { transform: 'translateY(0)', opacity: '1' },
         },
         scaleIn: {
           '0%': { transform: 'scale(0.95)', opacity: '0' },
-          '100%': { transform: 'scale(1)', opacity: '1' }
-        }
+          '100%': { transform: 'scale(1)', opacity: '1' },
+        },
       },
       boxShadow: {
-        'glow': '0 0 20px rgba(59, 130, 246, 0.5)',
+        glow: '0 0 20px rgba(59, 130, 246, 0.5)',
         'glow-green': '0 0 20px rgba(34, 197, 94, 0.5)',
-        'glow-red': '0 0 20px rgba(239, 68, 68, 0.5)'
+        'glow-red': '0 0 20px rgba(239, 68, 68, 0.5)',
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-        'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
-        'glass': 'linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0))'
+        'gradient-conic':
+          'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
+        glass:
+          'linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0))',
       },
       backdropBlur: {
-        xs: '2px'
-      }
+        xs: '2px',
+      },
+      borderRadius: {
+        lg: 'var(--radius)',
+        md: 'calc(var(--radius) - 2px)',
+        sm: 'calc(var(--radius) - 4px)',
+      },
     },
   },
   plugins: [
     require('@tailwindcss/forms'),
     require('@tailwindcss/typography'),
     // Custom plugin for glass morphism
-    function({ addUtilities }) {
+    function ({ addUtilities }) {
       const newUtilities = {
         '.glass': {
           background: 'rgba(255, 255, 255, 0.1)',
           'backdrop-filter': 'blur(10px)',
-          border: '1px solid rgba(255, 255, 255, 0.2)'
+          border: '1px solid rgba(255, 255, 255, 0.2)',
         },
         '.glass-dark': {
           background: 'rgba(0, 0, 0, 0.1)',
           'backdrop-filter': 'blur(10px)',
-          border: '1px solid rgba(255, 255, 255, 0.1)'
-        }
-      }
-      addUtilities(newUtilities)
-    }
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+        },
+      };
+      addUtilities(newUtilities);
+    },
   ],
-  darkMode: 'class'
-}
+  darkMode: 'class',
+};

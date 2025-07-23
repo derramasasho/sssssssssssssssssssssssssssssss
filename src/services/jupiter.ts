@@ -1,4 +1,9 @@
-import { Connection, PublicKey, Transaction, VersionedTransaction } from '@solana/web3.js';
+import {
+  Connection,
+  PublicKey,
+  Transaction,
+  VersionedTransaction,
+} from '@solana/web3.js';
 import { TOKEN_PROGRAM_ID, getAssociatedTokenAddress } from '@solana/spl-token';
 import axios, { AxiosInstance } from 'axios';
 import { SwapQuote, Token, RouteStep } from '@/types';
@@ -72,13 +77,15 @@ export class JupiterService {
       baseURL: 'https://quote-api.jup.ag/v6',
       timeout: 15000,
       headers: {
-        'Accept': 'application/json',
+        Accept: 'application/json',
         'Content-Type': 'application/json',
-      }
+      },
     });
 
     // Initialize Solana connection
-    const rpcUrl = process.env.NEXT_PUBLIC_SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
+    const rpcUrl =
+      process.env.NEXT_PUBLIC_SOLANA_RPC_URL ||
+      'https://api.mainnet-beta.solana.com';
     this.connection = new Connection(rpcUrl, 'confirmed');
 
     this.setupInterceptors();
@@ -95,7 +102,10 @@ export class JupiterService {
     this.client.interceptors.response.use(
       response => response,
       error => {
-        console.error('Jupiter API Error:', error.response?.data || error.message);
+        console.error(
+          'Jupiter API Error:',
+          error.response?.data || error.message
+        );
         throw error;
       }
     );
@@ -105,7 +115,10 @@ export class JupiterService {
   // CACHE MANAGEMENT
   // ==========================================================================
 
-  private getCachedData<T>(key: string, duration: number = this.CACHE_DURATION): T | null {
+  private getCachedData<T>(
+    key: string,
+    duration: number = this.CACHE_DURATION
+  ): T | null {
     const cached = this.cache.get(key);
     if (cached && Date.now() - cached.timestamp < duration) {
       return cached.data as T;
@@ -123,9 +136,12 @@ export class JupiterService {
 
   async getAllTokens(): Promise<Token[]> {
     const cacheKey = 'jupiter_tokens';
-    
+
     // Check cache first
-    const cached = this.getCachedData<Token[]>(cacheKey, this.TOKEN_CACHE_DURATION);
+    const cached = this.getCachedData<Token[]>(
+      cacheKey,
+      this.TOKEN_CACHE_DURATION
+    );
     if (cached) {
       return cached;
     }
@@ -133,7 +149,7 @@ export class JupiterService {
     try {
       const response = await this.client.get('/tokens');
       const jupiterTokens: JupiterToken[] = response.data;
-      
+
       const tokens: Token[] = jupiterTokens
         .filter(token => token.verified !== false) // Only include verified tokens
         .map(token => ({
@@ -142,10 +158,10 @@ export class JupiterService {
           symbol: token.symbol,
           name: token.name,
           decimals: token.decimals,
-          logoURI: token.logoURI,
+          logoURI: token.logoURI || '',
           isVerified: token.verified !== false,
           tags: token.tags || ['solana'],
-          volume24h: token.daily_volume,
+          volume24h: token.daily_volume || 0,
         }));
 
       this.setCachedData(cacheKey, tokens);
@@ -158,7 +174,7 @@ export class JupiterService {
 
   async getPopularTokens(): Promise<Token[]> {
     const allTokens = await this.getAllTokens();
-    
+
     // Filter for most popular Solana tokens
     const popularMints = [
       'So11111111111111111111111111111111111111112', // SOL
@@ -166,15 +182,18 @@ export class JupiterService {
       'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB', // USDT
       'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263', // Bonk
       '4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R', // RAY
-      'SRMuApVNdxXokk5GT7XD5cUUgXMBCoAz2LHeuAoKWRt',  // SRM
-      'MangoCzJ36AjZyKwVj3VnYU4GTonjfVEnJmvvWaxLac',  // MNGO
+      'SRMuApVNdxXokk5GT7XD5cUUgXMBCoAz2LHeuAoKWRt', // SRM
+      'MangoCzJ36AjZyKwVj3VnYU4GTonjfVEnJmvvWaxLac', // MNGO
       'So11111111111111111111111111111111111111112', // Wrapped SOL
     ];
 
-    return allTokens.filter(token => 
-      popularMints.includes(token.address) || 
-      token.volume24h && token.volume24h > 100000 // High volume tokens
-    ).slice(0, 50);
+    return allTokens
+      .filter(
+        token =>
+          popularMints.includes(token.address) ||
+          (token.volume24h && token.volume24h > 100000) // High volume tokens
+      )
+      .slice(0, 50);
   }
 
   // ==========================================================================
@@ -188,7 +207,7 @@ export class JupiterService {
     slippage: number = 1
   ): Promise<SwapQuote[]> {
     const cacheKey = `jupiter_quote_${fromToken.address}_${toToken.address}_${amount}_${slippage}`;
-    
+
     // Check cache first
     const cached = this.getCachedData<SwapQuote[]>(cacheKey);
     if (cached) {
@@ -196,7 +215,10 @@ export class JupiterService {
     }
 
     try {
-      const amountInSmallestUnit = this.parseTokenAmount(amount, fromToken.decimals);
+      const amountInSmallestUnit = this.parseTokenAmount(
+        amount,
+        fromToken.decimals
+      );
       const slippageBps = Math.floor(slippage * 100); // Convert percentage to basis points
 
       const response = await this.client.get('/quote', {
@@ -208,11 +230,11 @@ export class JupiterService {
           swapMode: 'ExactIn',
           onlyDirectRoutes: false,
           asLegacyTransaction: false,
-        }
+        },
       });
 
       const jupiterQuote: JupiterQuoteResponse = response.data;
-      
+
       // Convert Jupiter route to our RouteStep format
       const routes: RouteStep[] = jupiterQuote.routePlan.map(step => ({
         protocol: step.swapInfo.label,
@@ -222,7 +244,10 @@ export class JupiterService {
         tokenOut: toToken,
       }));
 
-      const outputAmount = this.formatTokenAmount(jupiterQuote.outAmount, toToken.decimals);
+      const outputAmount = this.formatTokenAmount(
+        jupiterQuote.outAmount,
+        toToken.decimals
+      );
       const priceImpact = parseFloat(jupiterQuote.priceImpactPct);
 
       const quote: SwapQuote = {
@@ -275,7 +300,7 @@ export class JupiterService {
       });
 
       const { swapTransaction }: JupiterSwapResponse = swapResponse.data;
-      
+
       // The swapTransaction is base64 encoded
       return swapTransaction;
     } catch (error) {
@@ -298,7 +323,7 @@ export class JupiterService {
     }>;
   }> {
     const cacheKey = `solana_balances_${walletAddress.toString()}`;
-    
+
     // Check cache first
     const cached = this.getCachedData<any>(cacheKey, 60000); // 1 minute cache
     if (cached) {
@@ -343,8 +368,11 @@ export class JupiterService {
 
   async getTokenMetadata(mintAddress: string): Promise<Token | null> {
     const cacheKey = `token_metadata_${mintAddress}`;
-    
-    const cached = this.getCachedData<Token>(cacheKey, this.TOKEN_CACHE_DURATION);
+
+    const cached = this.getCachedData<Token>(
+      cacheKey,
+      this.TOKEN_CACHE_DURATION
+    );
     if (cached) {
       return cached;
     }
@@ -353,7 +381,7 @@ export class JupiterService {
       // Try to get from our token list first
       const allTokens = await this.getAllTokens();
       const token = allTokens.find(t => t.address === mintAddress);
-      
+
       if (token) {
         this.setCachedData(cacheKey, token);
         return token;
@@ -434,8 +462,14 @@ export class JupiterService {
     overall: boolean;
   }> {
     const checks = await Promise.allSettled([
-      this.client.get('/tokens').then(() => true).catch(() => false),
-      this.connection.getSlot().then(() => true).catch(() => false),
+      this.client
+        .get('/tokens')
+        .then(() => true)
+        .catch(() => false),
+      this.connection
+        .getSlot()
+        .then(() => true)
+        .catch(() => false),
     ]);
 
     const api = checks[0].status === 'fulfilled' ? checks[0].value : false;
@@ -465,10 +499,13 @@ export class JupiterService {
 // UTILITY FUNCTIONS
 // =============================================================================
 
-export function calculateMinimumReceivedSolana(quote: SwapQuote, userSlippage?: number): string {
+export function calculateMinimumReceivedSolana(
+  quote: SwapQuote,
+  userSlippage?: number
+): string {
   const slippage = userSlippage || quote.slippage;
   const outputAmount = parseFloat(quote.toAmount);
-  const slippageMultiplier = 1 - (slippage / 100);
+  const slippageMultiplier = 1 - slippage / 100;
   return (outputAmount * slippageMultiplier).toString();
 }
 

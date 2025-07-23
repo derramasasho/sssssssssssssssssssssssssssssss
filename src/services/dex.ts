@@ -49,11 +49,11 @@ export class DexService {
       baseURL: 'https://api.1inch.io/v5.0',
       timeout: 10000,
       headers: {
-        'Accept': 'application/json',
+        Accept: 'application/json',
         ...(process.env.NEXT_PUBLIC_1INCH_API_KEY && {
-          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_1INCH_API_KEY}`
-        })
-      }
+          Authorization: `Bearer ${process.env.NEXT_PUBLIC_1INCH_API_KEY}`,
+        }),
+      },
     });
 
     this.setupInterceptors();
@@ -70,7 +70,10 @@ export class DexService {
     this.oneInchClient.interceptors.response.use(
       response => response,
       error => {
-        console.error('1inch API Error:', error.response?.data || error.message);
+        console.error(
+          '1inch API Error:',
+          error.response?.data || error.message
+        );
         throw error;
       }
     );
@@ -93,6 +96,46 @@ export class DexService {
   }
 
   // ==========================================================================
+  // TOKEN LISTS
+  // ==========================================================================
+
+  async getSupportedTokens(chainId: number = 1): Promise<Token[]> {
+    if (!this.SUPPORTED_CHAIN_IDS.includes(chainId)) {
+      throw new Error(`Chain ID ${chainId} not supported`);
+    }
+
+    const cacheKey = `tokens_${chainId}`;
+    const cached = this.getCachedData<Token[]>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    try {
+      const response = await this.oneInchClient.get(`/${chainId}/tokens`);
+      const tokens: Token[] = Object.values(response.data.tokens).map(
+        (token: any) => ({
+          id: token.address.toLowerCase(),
+          address: token.address as Address,
+          symbol: token.symbol,
+          name: token.name,
+          decimals: token.decimals,
+          logoURI: token.logoURI,
+          isVerified: true,
+        })
+      );
+
+      this.setCachedData(cacheKey, tokens);
+      return tokens;
+    } catch (error) {
+      console.error(
+        `Failed to fetch supported tokens for chain ${chainId}:`,
+        error
+      );
+      return [];
+    }
+  }
+
+  // ==========================================================================
   // SWAP QUOTE FETCHING
   // ==========================================================================
 
@@ -108,7 +151,7 @@ export class DexService {
     }
 
     const cacheKey = `quote_${fromToken.address}_${toToken.address}_${amount}_${slippage}_${chainId}`;
-    
+
     // Check cache first
     const cached = this.getCachedData<SwapQuote[]>(cacheKey);
     if (cached) {
@@ -118,7 +161,13 @@ export class DexService {
     const quotes: SwapQuote[] = [];
 
     try {
-      const oneInchQuote = await this.get1InchQuote(fromToken, toToken, amount, slippage, chainId);
+      const oneInchQuote = await this.get1InchQuote(
+        fromToken,
+        toToken,
+        amount,
+        slippage,
+        chainId
+      );
       if (oneInchQuote) {
         quotes.push(oneInchQuote);
       }
@@ -156,12 +205,12 @@ export class DexService {
           connectorTokens: this.getConnectorTokens(chainId),
           complexityLevel: 3,
           mainRouteParts: 10,
-          parts: 50
-        }
+          parts: 50,
+        },
       });
 
       const quote: OneInchQuote = response.data;
-      
+
       const routes: RouteStep[] = quote.protocols.map(protocol => ({
         protocol: protocol.name,
         poolAddress: protocol.fromTokenAddress as Address,
@@ -172,7 +221,9 @@ export class DexService {
 
       const priceImpact = this.calculatePriceImpact(
         parseFloat(amount),
-        parseFloat(this.formatTokenAmount(quote.toTokenAmount, toToken.decimals))
+        parseFloat(
+          this.formatTokenAmount(quote.toTokenAmount, toToken.decimals)
+        )
       );
 
       return {
@@ -209,14 +260,17 @@ export class DexService {
     return (num / Math.pow(10, decimals)).toString();
   }
 
-  private calculatePriceImpact(inputAmount: number, outputAmount: number): number {
+  private calculatePriceImpact(
+    inputAmount: number,
+    outputAmount: number
+  ): number {
     // Simplified price impact calculation
     let impact = 0.3;
-    
+
     if (inputAmount > 1000) impact += 0.2;
     if (inputAmount > 10000) impact += 0.5;
     if (inputAmount > 100000) impact += 1.0;
-    
+
     return Math.min(impact, 15); // Cap at 15%
   }
 
@@ -234,7 +288,7 @@ export class DexService {
       ],
     };
 
-    return (connectors[chainId] || connectors[1]).join(',');
+    return (connectors[chainId] || connectors[1] || []).join(',');
   }
 
   clearCache(): void {

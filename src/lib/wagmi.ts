@@ -3,20 +3,18 @@ import { mainnet, polygon, arbitrum, bsc } from 'wagmi/chains';
 import { alchemyProvider } from 'wagmi/providers/alchemy';
 import { infuraProvider } from 'wagmi/providers/infura';
 import { publicProvider } from 'wagmi/providers/public';
-import { getDefaultWallets, connectorsForWallets } from '@rainbow-me/rainbowkit';
-import { ledgerWallet, trezorWallet } from '@rainbow-me/rainbowkit/wallets';
+import {
+  getDefaultWallets,
+  connectorsForWallets,
+} from '@rainbow-me/rainbowkit';
+import { ledgerWallet } from '@rainbow-me/rainbowkit/wallets';
 
 // =============================================================================
 // CHAIN CONFIGURATION
 // =============================================================================
 
 const { chains, publicClient, webSocketPublicClient } = configureChains(
-  [
-    mainnet,
-    polygon,
-    arbitrum,
-    bsc,
-  ],
+  [mainnet, polygon, arbitrum, bsc],
   [
     alchemyProvider({ apiKey: process.env.NEXT_PUBLIC_ALCHEMY_API_KEY! }),
     infuraProvider({ apiKey: process.env.NEXT_PUBLIC_INFURA_PROJECT_ID! }),
@@ -40,10 +38,7 @@ const connectors = connectorsForWallets([
   ...wallets,
   {
     groupName: 'Hardware',
-    wallets: [
-      ledgerWallet({ projectId, chains }),
-      trezorWallet({ projectId, chains }),
-    ],
+    wallets: [ledgerWallet({ projectId, chains })],
   },
 ]);
 
@@ -68,10 +63,14 @@ export function getChainById(chainId: number) {
   return chains.find(chain => chain.id === chainId);
 }
 
-export function getBlockExplorerUrl(chainId: number, hash: string, type: 'tx' | 'address' = 'tx') {
+export function getBlockExplorerUrl(
+  chainId: number,
+  hash: string,
+  type: 'tx' | 'address' = 'tx'
+) {
   const chain = getChainById(chainId);
   if (!chain?.blockExplorers?.default?.url) return null;
-  
+
   const baseUrl = chain.blockExplorers.default.url;
   return `${baseUrl}/${type}/${hash}`;
 }
@@ -87,7 +86,7 @@ export function isChainSupported(chainId: number): boolean {
 export function getRpcUrl(chainId: number): string {
   const chain = getChainById(chainId);
   if (!chain) throw new Error(`Unsupported chain: ${chainId}`);
-  
+
   // Use Alchemy for supported chains
   const alchemyKey = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
   if (alchemyKey) {
@@ -102,7 +101,7 @@ export function getRpcUrl(chainId: number): string {
         break;
     }
   }
-  
+
   // Use Infura as fallback
   const infuraKey = process.env.NEXT_PUBLIC_INFURA_PROJECT_ID;
   if (infuraKey) {
@@ -117,7 +116,7 @@ export function getRpcUrl(chainId: number): string {
         break;
     }
   }
-  
+
   // Fallback to public RPC
   return chain.rpcUrls.default.http[0] || chain.rpcUrls.public.http[0];
 }
@@ -140,7 +139,10 @@ export const NETWORK_COLORS: Record<number, string> = {
   [bsc.id]: '#F0B90B',
 };
 
-export const NATIVE_CURRENCY: Record<number, { name: string; symbol: string; decimals: number }> = {
+export const NATIVE_CURRENCY: Record<
+  number,
+  { name: string; symbol: string; decimals: number }
+> = {
   [mainnet.id]: { name: 'Ethereum', symbol: 'ETH', decimals: 18 },
   [polygon.id]: { name: 'Polygon', symbol: 'MATIC', decimals: 18 },
   [arbitrum.id]: { name: 'Ethereum', symbol: 'ETH', decimals: 18 },

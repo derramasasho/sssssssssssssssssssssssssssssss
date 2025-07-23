@@ -1,7 +1,10 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
+import {
+  ConnectionProvider,
+  WalletProvider,
+} from '@solana/wallet-adapter-react';
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
 import {
@@ -9,7 +12,6 @@ import {
   SolflareWalletAdapter,
   TorusWalletAdapter,
   LedgerWalletAdapter,
-  SolletWalletAdapter,
 } from '@solana/wallet-adapter-wallets';
 import { clusterApiUrl } from '@solana/web3.js';
 
@@ -24,62 +26,59 @@ interface SolanaProviderProps {
   children: React.ReactNode;
 }
 
-export default function SolanaProvider({ children }: SolanaProviderProps): JSX.Element {
+export default function SolanaProvider({
+  children,
+}: SolanaProviderProps): JSX.Element {
   // Network configuration
   const network = WalletAdapterNetwork.Mainnet;
-  
+
   // RPC endpoint configuration
   const endpoint = useMemo(() => {
     const customRpc = process.env.NEXT_PUBLIC_SOLANA_RPC_URL;
     if (customRpc) {
       return customRpc;
     }
-    
-    // Fallback to public endpoints
-    switch (network) {
-      case WalletAdapterNetwork.Mainnet:
-        return process.env.NEXT_PUBLIC_HELIUS_RPC_URL || 
-               process.env.NEXT_PUBLIC_QUICKNODE_SOLANA_RPC ||
-               'https://api.mainnet-beta.solana.com';
-      case WalletAdapterNetwork.Testnet:
-        return clusterApiUrl(network);
-      case WalletAdapterNetwork.Devnet:
-        return clusterApiUrl(network);
-      default:
-        return clusterApiUrl(WalletAdapterNetwork.Mainnet);
-    }
+
+    // Always use mainnet for production
+    return (
+      process.env.NEXT_PUBLIC_HELIUS_RPC_URL ||
+      process.env.NEXT_PUBLIC_QUICKNODE_SOLANA_RPC ||
+      'https://api.mainnet-beta.solana.com'
+    );
   }, [network]);
 
   // Wallet adapters configuration
-  const wallets = useMemo(() => [
-    // Popular wallets
-    new PhantomWalletAdapter(),
-    new SolflareWalletAdapter(),
-    
-    // Additional wallets
-    new TorusWalletAdapter(),
-    new LedgerWalletAdapter(),
-    new SolletWalletAdapter(),
-  ], []);
+  const wallets = useMemo(
+    () => [
+      // Popular wallets
+      new PhantomWalletAdapter(),
+      new SolflareWalletAdapter(),
+
+      // Additional wallets
+      new TorusWalletAdapter(),
+      new LedgerWalletAdapter(),
+    ],
+    []
+  );
 
   return (
-    <ConnectionProvider 
+    <ConnectionProvider
       endpoint={endpoint}
       config={{
         commitment: 'confirmed',
-        wsEndpoint: endpoint.replace('https://', 'wss://').replace('http://', 'ws://'),
+        wsEndpoint: endpoint
+          .replace('https://', 'wss://')
+          .replace('http://', 'ws://'),
       }}
     >
-      <WalletProvider 
-        wallets={wallets} 
+      <WalletProvider
+        wallets={wallets}
         autoConnect={true}
-        onError={(error) => {
+        onError={error => {
           console.error('Solana wallet error:', error);
         }}
       >
-        <WalletModalProvider>
-          {children}
-        </WalletModalProvider>
+        <WalletModalProvider>{children}</WalletModalProvider>
       </WalletProvider>
     </ConnectionProvider>
   );
@@ -102,7 +101,7 @@ export function detectSolanaWallets(): {
   const phantom = !!(window as any).phantom?.solana;
   const solflare = !!(window as any).solflare;
   const torus = !!(window as any).torus;
-  
+
   // Check for other Solana wallets
   const others: string[] = [];
   if ((window as any).sollet) others.push('Sollet');
@@ -114,7 +113,12 @@ export function detectSolanaWallets(): {
 
 export function isSolanaWalletInstalled(): boolean {
   const detected = detectSolanaWallets();
-  return detected.phantom || detected.solflare || detected.torus || detected.others.length > 0;
+  return (
+    detected.phantom ||
+    detected.solflare ||
+    detected.torus ||
+    detected.others.length > 0
+  );
 }
 
 // =============================================================================
@@ -127,6 +131,8 @@ export const SOLANA_WALLET_URLS = {
   torus: 'https://tor.us/',
 } as const;
 
-export function getSolanaWalletInstallUrl(walletName: keyof typeof SOLANA_WALLET_URLS): string {
+export function getSolanaWalletInstallUrl(
+  walletName: keyof typeof SOLANA_WALLET_URLS
+): string {
   return SOLANA_WALLET_URLS[walletName];
 }

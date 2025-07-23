@@ -2,14 +2,14 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  SparklesIcon, 
-  SendIcon, 
+import {
+  SparklesIcon,
+  SendIcon,
   RefreshCwIcon,
   BrainIcon,
   MessageCircleIcon,
   UserIcon,
-  BotIcon
+  BotIcon,
 } from 'lucide-react';
 
 // Types and Services
@@ -29,12 +29,12 @@ import { cn } from '@/utils/cn';
 export default function AIAssistant(): JSX.Element {
   const { activeWallet } = useMultiChainWallet();
   const { portfolio } = usePortfolio();
-  
+
   const [messages, setMessages] = useState<AIMessage[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isServiceAvailable, setIsServiceAvailable] = useState(false);
-  
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Check AI service availability on mount
@@ -73,9 +73,13 @@ export default function AIAssistant(): JSX.Element {
       }
 
       // Send message to AI service
-      const aiResponse = await aiService.chat(userMessage, portfolio || undefined, {
-        marketData,
-      });
+      const aiResponse = await aiService.chat(
+        userMessage,
+        portfolio || undefined,
+        {
+          marketData,
+        }
+      );
 
       // Update local messages state
       setMessages(prev => [
@@ -86,11 +90,11 @@ export default function AIAssistant(): JSX.Element {
           content: userMessage,
           timestamp: new Date(),
         },
-        aiResponse
+        aiResponse,
       ]);
     } catch (error) {
       console.error('Failed to send message:', error);
-      
+
       // Add error message
       setMessages(prev => [
         ...prev,
@@ -103,9 +107,10 @@ export default function AIAssistant(): JSX.Element {
         {
           id: `error_${Date.now()}`,
           type: 'assistant',
-          content: 'Sorry, I encountered an error processing your message. Please try again.',
+          content:
+            'Sorry, I encountered an error processing your message. Please try again.',
           timestamp: new Date(),
-        }
+        },
       ]);
     } finally {
       setIsLoading(false);
@@ -131,19 +136,27 @@ export default function AIAssistant(): JSX.Element {
   const quickActions = [
     {
       label: 'Analyze my portfolio',
-      action: () => setInputMessage('Analyze my current portfolio performance and provide insights.'),
+      action: () =>
+        setInputMessage(
+          'Analyze my current portfolio performance and provide insights.'
+        ),
     },
     {
       label: 'Market outlook',
-      action: () => setInputMessage('What is the current market outlook for DeFi tokens?'),
+      action: () =>
+        setInputMessage('What is the current market outlook for DeFi tokens?'),
     },
     {
       label: 'Trading suggestions',
-      action: () => setInputMessage('Suggest some trading opportunities based on my portfolio.'),
+      action: () =>
+        setInputMessage(
+          'Suggest some trading opportunities based on my portfolio.'
+        ),
     },
     {
       label: 'Risk assessment',
-      action: () => setInputMessage('Assess the risk level of my current portfolio.'),
+      action: () =>
+        setInputMessage('Assess the risk level of my current portfolio.'),
     },
   ];
 
@@ -157,39 +170,40 @@ export default function AIAssistant(): JSX.Element {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className={cn(
-        "flex gap-3 p-4 rounded-lg",
-        message.type === 'user' 
-          ? "bg-primary/10 ml-8" 
-          : "bg-muted/50 mr-8"
+        'flex gap-3 rounded-lg p-4',
+        message.type === 'user' ? 'ml-8 bg-primary/10' : 'mr-8 bg-muted/50'
       )}
     >
-      <div className={cn(
-        "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0",
-        message.type === 'user'
-          ? "bg-primary text-primary-foreground"
-          : "bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-300"
-      )}>
+      <div
+        className={cn(
+          'flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full',
+          message.type === 'user'
+            ? 'bg-primary text-primary-foreground'
+            : 'bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-300'
+        )}
+      >
         {message.type === 'user' ? (
-          <UserIcon className="w-4 h-4" />
+          <UserIcon className="h-4 w-4" />
         ) : (
-          <BotIcon className="w-4 h-4" />
+          <BotIcon className="h-4 w-4" />
         )}
       </div>
-      
+
       <div className="flex-1 space-y-2">
         <div className="text-sm text-muted-foreground">
-          {message.type === 'user' ? 'You' : 'AI Assistant'} • {message.timestamp.toLocaleTimeString()}
+          {message.type === 'user' ? 'You' : 'AI Assistant'} •{' '}
+          {message.timestamp.toLocaleTimeString()}
         </div>
-        <div className="prose prose-sm dark:prose-invert max-w-none">
+        <div className="prose prose-sm max-w-none dark:prose-invert">
           {message.content}
         </div>
-        
+
         {message.metadata?.tokens && message.metadata.tokens.length > 0 && (
-          <div className="flex flex-wrap gap-1 mt-2">
+          <div className="mt-2 flex flex-wrap gap-1">
             {message.metadata.tokens.map(token => (
               <span
                 key={token.id}
-                className="px-2 py-1 bg-primary/20 text-primary text-xs rounded-full"
+                className="rounded-full bg-primary/20 px-2 py-1 text-xs text-primary"
               >
                 {token.symbol}
               </span>
@@ -208,15 +222,20 @@ export default function AIAssistant(): JSX.Element {
     return (
       <div className="space-y-6">
         <h2 className="text-2xl font-bold">AI Assistant</h2>
-        
+
         <div className="card p-8 text-center">
-          <BrainIcon className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-semibold mb-2">AI Assistant Unavailable</h3>
-          <p className="text-muted-foreground mb-4">
-            The AI assistant requires an OpenAI API key to function. Please configure your environment variables.
+          <BrainIcon className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+          <h3 className="mb-2 text-lg font-semibold">
+            AI Assistant Unavailable
+          </h3>
+          <p className="mb-4 text-muted-foreground">
+            The AI assistant requires an OpenAI API key to function. Please
+            configure your environment variables.
           </p>
           <div className="text-sm text-muted-foreground">
-            Set <code className="bg-muted px-2 py-1 rounded">OPENAI_API_KEY</code> in your environment
+            Set{' '}
+            <code className="rounded bg-muted px-2 py-1">OPENAI_API_KEY</code>{' '}
+            in your environment
           </div>
         </div>
       </div>
@@ -228,16 +247,16 @@ export default function AIAssistant(): JSX.Element {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <SparklesIcon className="w-8 h-8 text-purple-600" />
+          <SparklesIcon className="h-8 w-8 text-purple-600" />
           <h2 className="text-2xl font-bold">AI Assistant</h2>
         </div>
-        
+
         <button
           onClick={clearConversation}
           className="btn btn-outline btn-sm"
           disabled={messages.length === 0}
         >
-          <RefreshCwIcon className="w-4 h-4 mr-2" />
+          <RefreshCwIcon className="mr-2 h-4 w-4" />
           Clear Chat
         </button>
       </div>
@@ -245,17 +264,20 @@ export default function AIAssistant(): JSX.Element {
       {/* Chat Interface */}
       <div className="card overflow-hidden">
         {/* Messages Area */}
-        <div className="h-96 overflow-y-auto p-4 space-y-4">
+        <div className="h-96 space-y-4 overflow-y-auto p-4">
           {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center">
-              <MessageCircleIcon className="w-12 h-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Welcome to your AI Assistant</h3>
-              <p className="text-muted-foreground mb-6 max-w-md">
-                I can help you analyze your portfolio, provide market insights, suggest trading strategies, and answer DeFi-related questions.
+            <div className="flex h-full flex-col items-center justify-center text-center">
+              <MessageCircleIcon className="mb-4 h-12 w-12 text-muted-foreground" />
+              <h3 className="mb-2 text-lg font-semibold">
+                Welcome to your AI Assistant
+              </h3>
+              <p className="mb-6 max-w-md text-muted-foreground">
+                I can help you analyze your portfolio, provide market insights,
+                suggest trading strategies, and answer DeFi-related questions.
               </p>
-              
+
               {/* Quick Actions */}
-              <div className="grid grid-cols-2 gap-2 w-full max-w-lg">
+              <div className="grid w-full max-w-lg grid-cols-2 gap-2">
                 {quickActions.map((action, index) => (
                   <button
                     key={index}
@@ -274,16 +296,25 @@ export default function AIAssistant(): JSX.Element {
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="flex gap-3 p-4 rounded-lg bg-muted/50 mr-8"
+                  className="mr-8 flex gap-3 rounded-lg bg-muted/50 p-4"
                 >
-                  <div className="w-8 h-8 rounded-full bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-300 flex items-center justify-center">
-                    <BotIcon className="w-4 h-4" />
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-300">
+                    <BotIcon className="h-4 w-4" />
                   </div>
                   <div className="flex items-center">
                     <div className="flex space-x-1">
-                      <div className="w-2 h-2 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                      <div className="w-2 h-2 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                      <div className="w-2 h-2 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                      <div
+                        className="h-2 w-2 animate-bounce rounded-full bg-purple-600"
+                        style={{ animationDelay: '0ms' }}
+                      />
+                      <div
+                        className="h-2 w-2 animate-bounce rounded-full bg-purple-600"
+                        style={{ animationDelay: '150ms' }}
+                      />
+                      <div
+                        className="h-2 w-2 animate-bounce rounded-full bg-purple-600"
+                        style={{ animationDelay: '300ms' }}
+                      />
                     </div>
                   </div>
                 </motion.div>
@@ -298,14 +329,14 @@ export default function AIAssistant(): JSX.Element {
           <div className="flex gap-3">
             <textarea
               value={inputMessage}
-              onChange={(e) => setInputMessage(e.target.value)}
+              onChange={e => setInputMessage(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder={
-                activeWallet 
-                  ? "Ask me about your portfolio, market trends, or trading strategies..."
-                  : "Connect your wallet for personalized advice, or ask general DeFi questions..."
+                activeWallet
+                  ? 'Ask me about your portfolio, market trends, or trading strategies...'
+                  : 'Connect your wallet for personalized advice, or ask general DeFi questions...'
               }
-              className="flex-1 resize-none border border-border rounded-lg px-3 py-2 min-h-[44px] max-h-32 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+              className="max-h-32 min-h-[44px] flex-1 resize-none rounded-lg border border-border px-3 py-2 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary"
               rows={1}
               disabled={isLoading}
             />
@@ -314,35 +345,38 @@ export default function AIAssistant(): JSX.Element {
               disabled={!inputMessage.trim() || isLoading}
               className="btn btn-primary px-4"
             >
-              <SendIcon className="w-4 h-4" />
+              <SendIcon className="h-4 w-4" />
             </button>
           </div>
-          
-          <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
+
+          <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
             <span>Press Enter to send, Shift+Enter for new line</span>
             {activeWallet && (
-              <span>Connected: {activeWallet.address.slice(0, 6)}...{activeWallet.address.slice(-4)}</span>
+              <span>
+                Connected: {activeWallet.address.slice(0, 6)}...
+                {activeWallet.address.slice(-4)}
+              </span>
             )}
           </div>
         </div>
       </div>
 
       {/* Context Info */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div className="card p-4">
-          <h4 className="font-semibold mb-2">Portfolio Context</h4>
+          <h4 className="mb-2 font-semibold">Portfolio Context</h4>
           <p className="text-sm text-muted-foreground">
-            {portfolio 
+            {portfolio
               ? `Analyzing ${portfolio.positions.length} positions worth ${new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(portfolio.totalValueUSD)}`
-              : "Connect your wallet for personalized portfolio analysis"
-            }
+              : 'Connect your wallet for personalized portfolio analysis'}
           </p>
         </div>
-        
+
         <div className="card p-4">
-          <h4 className="font-semibold mb-2">AI Capabilities</h4>
+          <h4 className="mb-2 font-semibold">AI Capabilities</h4>
           <p className="text-sm text-muted-foreground">
-            Portfolio analysis, market insights, trading suggestions, risk assessment, DeFi education
+            Portfolio analysis, market insights, trading suggestions, risk
+            assessment, DeFi education
           </p>
         </div>
       </div>

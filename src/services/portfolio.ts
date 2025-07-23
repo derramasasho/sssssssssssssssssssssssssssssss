@@ -1,13 +1,13 @@
 import { PublicClient, Address, formatUnits } from 'viem';
 import { mainnet } from 'viem/chains';
 import { createPublicClient, http } from 'viem';
-import { 
-  Portfolio, 
-  PortfolioPosition, 
-  Token, 
-  TokenBalance, 
+import {
+  Portfolio,
+  PortfolioPosition,
+  Token,
+  TokenBalance,
   PerformanceDataPoint,
-  PriceData 
+  PriceData,
 } from '@/types';
 import { pricingService } from './pricing';
 import { POPULAR_TOKENS } from '@/lib/constants';
@@ -70,10 +70,13 @@ export class PortfolioService {
 
   private initializeClients(): void {
     // Ethereum mainnet
-    this.clients.set(1, createPublicClient({
-      chain: mainnet,
-      transport: http(this.getRpcUrl(1))
-    }));
+    this.clients.set(
+      1,
+      createPublicClient({
+        chain: mainnet,
+        transport: http(this.getRpcUrl(1)),
+      })
+    );
 
     // Add more chains as needed
     // Polygon, Arbitrum, etc.
@@ -81,10 +84,10 @@ export class PortfolioService {
 
   private getRpcUrl(chainId: number): string {
     const alchemyKey = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
-    
+
     switch (chainId) {
       case 1: // Ethereum
-        return alchemyKey 
+        return alchemyKey
           ? `https://eth-mainnet.alchemyapi.io/v2/${alchemyKey}`
           : 'https://ethereum.publicnode.com';
       case 137: // Polygon
@@ -121,12 +124,12 @@ export class PortfolioService {
   // ==========================================================================
 
   async getTokenBalances(
-    address: Address, 
-    tokens: Token[], 
+    address: Address,
+    tokens: Token[],
     chainId: number = 1
   ): Promise<TokenBalance[]> {
     const cacheKey = `balances_${address}_${chainId}`;
-    
+
     // Check cache first
     const cached = this.getCachedData<TokenBalance[]>(cacheKey);
     if (cached) {
@@ -144,25 +147,32 @@ export class PortfolioService {
       // Get native token balance (ETH, MATIC, etc.)
       const nativeBalance = await client.getBalance({ address });
       const nativeToken = this.getNativeToken(chainId);
-      
+
       if (nativeToken) {
-        const formattedBalance = formatUnits(nativeBalance, nativeToken.decimals);
+        const formattedBalance = formatUnits(
+          nativeBalance,
+          nativeToken.decimals
+        );
         const priceData = await this.getTokenPrice(nativeToken.symbol);
-        
+
         balances.push({
           token: nativeToken,
           balance: nativeBalance.toString(),
           balanceFormatted: formattedBalance,
           balanceUSD: parseFloat(formattedBalance) * (priceData?.price || 0),
-          price: priceData?.price,
-          priceChange24h: priceData?.priceChange24h,
+          price: priceData?.price || 0,
+          priceChange24h: priceData?.priceChange24h || 0,
         });
       }
 
       // Get ERC20 token balances
       const erc20Balances = await Promise.allSettled(
-        tokens.filter(token => token.address !== '0x0000000000000000000000000000000000000000')
-          .map(async (token) => {
+        tokens
+          .filter(
+            token =>
+              token.address !== '0x0000000000000000000000000000000000000000'
+          )
+          .map(async token => {
             try {
               const balance = await client.readContract({
                 address: token.address,
@@ -171,25 +181,31 @@ export class PortfolioService {
                 args: [address],
               });
 
-              const formattedBalance = formatUnits(balance as bigint, token.decimals);
+              const formattedBalance = formatUnits(
+                balance as bigint,
+                token.decimals
+              );
               const balanceNum = parseFloat(formattedBalance);
 
               // Only include tokens with non-zero balance
               if (balanceNum > 0) {
                 const priceData = await this.getTokenPrice(token.symbol);
-                
+
                 return {
                   token,
                   balance: (balance as bigint).toString(),
                   balanceFormatted: formattedBalance,
                   balanceUSD: balanceNum * (priceData?.price || 0),
-                  price: priceData?.price,
-                  priceChange24h: priceData?.priceChange24h,
+                  price: priceData?.price || 0,
+                  priceChange24h: priceData?.priceChange24h || 0,
                 };
               }
               return null;
             } catch (error) {
-              console.warn(`Failed to fetch balance for ${token.symbol}:`, error);
+              console.warn(
+                `Failed to fetch balance for ${token.symbol}:`,
+                error
+              );
               return null;
             }
           })
@@ -217,9 +233,12 @@ export class PortfolioService {
   // PORTFOLIO CONSTRUCTION
   // ==========================================================================
 
-  async getPortfolio(address: Address, chainId: number = 1): Promise<Portfolio> {
+  async getPortfolio(
+    address: Address,
+    chainId: number = 1
+  ): Promise<Portfolio> {
     const cacheKey = `portfolio_${address}_${chainId}`;
-    
+
     // Check cache first
     const cached = this.getCachedData<Portfolio>(cacheKey);
     if (cached) {
@@ -229,29 +248,37 @@ export class PortfolioService {
     try {
       // Get default token list
       const tokens = Object.values(POPULAR_TOKENS);
-      
+
       // Fetch current balances
       const balances = await this.getTokenBalances(address, tokens, chainId);
-      
+
       // Convert balances to positions
       const positions: PortfolioPosition[] = balances
         .filter(balance => balance.balanceUSD > 0.01) // Filter dust
         .map(balance => this.createPortfolioPosition(balance));
 
       // Calculate totals
-      const totalValueUSD = positions.reduce((sum, pos) => sum + pos.balanceUSD, 0);
-      
+      const totalValueUSD = positions.reduce(
+        (sum, pos) => sum + pos.balanceUSD,
+        0
+      );
+
       // Calculate allocations
       positions.forEach(position => {
-        position.allocation = totalValueUSD > 0 ? (position.balanceUSD / totalValueUSD) * 100 : 0;
+        position.allocation =
+          totalValueUSD > 0 ? (position.balanceUSD / totalValueUSD) * 100 : 0;
       });
 
       // Get historical performance (simplified - in production you'd store this)
-      const performanceHistory = await this.getPerformanceHistory(address, chainId);
-      
+      const performanceHistory = await this.getPerformanceHistory(
+        address,
+        chainId
+      );
+
       // Calculate PnL (simplified - would need historical cost basis)
       const totalPnlUSD = this.calculateTotalPnL(positions);
-      const totalPnlPercentage = totalValueUSD > 0 ? (totalPnlUSD / totalValueUSD) * 100 : 0;
+      const totalPnlPercentage =
+        totalValueUSD > 0 ? (totalPnlUSD / totalValueUSD) * 100 : 0;
 
       const portfolio: Portfolio = {
         id: `portfolio_${address}_${chainId}`,
@@ -283,7 +310,7 @@ export class PortfolioService {
     volatility: number;
   } {
     const { positions } = portfolio;
-    
+
     if (positions.length === 0) {
       return {
         diversificationScore: 0,
@@ -298,18 +325,21 @@ export class PortfolioService {
     const diversificationScore = Math.max(0, 100 - largestAllocation);
 
     // Find largest position
-    const largestPosition = positions.reduce((largest, current) => 
+    const largestPosition = positions.reduce((largest, current) =>
       current.balanceUSD > largest.balanceUSD ? current : largest
     );
 
     // Calculate volatility based on price changes
     const avgVolatility = positions.reduce((sum, pos) => {
       const priceChange = Math.abs(pos.token.priceChange24h || 0);
-      return sum + (priceChange * (pos.allocation / 100));
+      return sum + priceChange * (pos.allocation / 100);
     }, 0);
 
     // Risk score (0-100, higher is riskier)
-    const riskScore = Math.min(100, avgVolatility * 2 + (100 - diversificationScore) * 0.3);
+    const riskScore = Math.min(
+      100,
+      avgVolatility * 2 + (100 - diversificationScore) * 0.3
+    );
 
     return {
       diversificationScore,
@@ -335,7 +365,7 @@ export class PortfolioService {
   private getNativeToken(chainId: number): Token | null {
     switch (chainId) {
       case 1:
-        return POPULAR_TOKENS.ETH;
+        return POPULAR_TOKENS.ETH || null;
       case 137:
         return {
           id: 'matic',
@@ -343,12 +373,13 @@ export class PortfolioService {
           symbol: 'MATIC',
           name: 'Polygon',
           decimals: 18,
+          logoURI: '',
           isVerified: true,
         };
       case 42161:
-        return POPULAR_TOKENS.ETH; // Arbitrum uses ETH
+        return POPULAR_TOKENS.ETH || null; // Arbitrum uses ETH
       default:
-        return POPULAR_TOKENS.ETH;
+        return POPULAR_TOKENS.ETH || null;
     }
   }
 
@@ -356,12 +387,14 @@ export class PortfolioService {
     // Simplified PnL calculation - in production you'd need historical cost basis
     const mockEntryPrice = (balance.price || 0) * 0.9; // Assume 10% profit for demo
     const currentPrice = balance.price || 0;
-    const pnl = currentPrice > 0 && mockEntryPrice > 0 
-      ? (currentPrice - mockEntryPrice) * parseFloat(balance.balanceFormatted)
-      : 0;
-    const pnlPercentage = mockEntryPrice > 0 
-      ? ((currentPrice - mockEntryPrice) / mockEntryPrice) * 100
-      : 0;
+    const pnl =
+      currentPrice > 0 && mockEntryPrice > 0
+        ? (currentPrice - mockEntryPrice) * parseFloat(balance.balanceFormatted)
+        : 0;
+    const pnlPercentage =
+      mockEntryPrice > 0
+        ? ((currentPrice - mockEntryPrice) / mockEntryPrice) * 100
+        : 0;
 
     return {
       id: `position_${balance.token.address}`,
@@ -382,14 +415,14 @@ export class PortfolioService {
   }
 
   private async getPerformanceHistory(
-    address: Address, 
+    address: Address,
     chainId: number
   ): Promise<PerformanceDataPoint[]> {
     // In production, you'd fetch historical data from your database
     // For now, generate mock historical data
     const history: PerformanceDataPoint[] = [];
     const now = new Date();
-    
+
     for (let i = 30; i >= 0; i--) {
       const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
       const baseValue = 10000; // Mock starting value
@@ -413,12 +446,15 @@ export class PortfolioService {
   // REAL-TIME UPDATES
   // ==========================================================================
 
-  async refreshPortfolio(address: Address, chainId: number = 1): Promise<Portfolio> {
+  async refreshPortfolio(
+    address: Address,
+    chainId: number = 1
+  ): Promise<Portfolio> {
     // Clear cache to force fresh data
     const cacheKey = `portfolio_${address}_${chainId}`;
     this.cache.delete(cacheKey);
     this.cache.delete(`balances_${address}_${chainId}`);
-    
+
     return this.getPortfolio(address, chainId);
   }
 
@@ -426,7 +462,10 @@ export class PortfolioService {
   // DEFI PROTOCOL INTEGRATION
   // ==========================================================================
 
-  async getDeFiPositions(address: Address, chainId: number = 1): Promise<{
+  async getDeFiPositions(
+    address: Address,
+    chainId: number = 1
+  ): Promise<{
     lending: PortfolioPosition[];
     liquidity: PortfolioPosition[];
     staking: PortfolioPosition[];
@@ -456,7 +495,7 @@ export class PortfolioService {
     try {
       const client = this.clients.get(1);
       if (!client) return false;
-      
+
       const blockNumber = await client.getBlockNumber();
       return blockNumber > 0;
     } catch (error) {
@@ -485,7 +524,9 @@ export function calculatePositionPnL(
   return { pnl, pnlPercentage };
 }
 
-export function calculatePortfolioDiversification(positions: PortfolioPosition[]): {
+export function calculatePortfolioDiversification(
+  positions: PortfolioPosition[]
+): {
   score: number;
   breakdown: { protocol: string; allocation: number }[];
 } {
@@ -495,23 +536,28 @@ export function calculatePortfolioDiversification(positions: PortfolioPosition[]
 
   // Group by protocol/category
   const protocolAllocations: Record<string, number> = {};
-  
+
   positions.forEach(position => {
     const protocol = position.token.tags?.[0] || 'other';
-    protocolAllocations[protocol] = (protocolAllocations[protocol] || 0) + position.allocation;
+    protocolAllocations[protocol] =
+      (protocolAllocations[protocol] || 0) + position.allocation;
   });
 
-  const breakdown = Object.entries(protocolAllocations).map(([protocol, allocation]) => ({
-    protocol,
-    allocation,
-  }));
+  const breakdown = Object.entries(protocolAllocations).map(
+    ([protocol, allocation]) => ({
+      protocol,
+      allocation,
+    })
+  );
 
   // Calculate Herfindahl-Hirschman Index for diversification
-  const hhi = Object.values(protocolAllocations)
-    .reduce((sum, allocation) => sum + Math.pow(allocation, 2), 0);
-  
+  const hhi = Object.values(protocolAllocations).reduce(
+    (sum, allocation) => sum + Math.pow(allocation, 2),
+    0
+  );
+
   // Convert to 0-100 score (higher is more diversified)
-  const score = Math.max(0, 100 - (hhi / 100));
+  const score = Math.max(0, 100 - hhi / 100);
 
   return { score, breakdown };
 }

@@ -4,16 +4,16 @@ import React, { useState } from 'react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useTheme } from 'next-themes';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Bars3Icon, 
-  XMarkIcon, 
-  SunIcon, 
+import {
+  Bars3Icon,
+  XMarkIcon,
+  SunIcon,
   MoonIcon,
   BellIcon,
   Cog6ToothIcon,
   ChartBarIcon,
   CurrencyDollarIcon,
-  HomeIcon
+  HomeIcon,
 } from '@heroicons/react/24/outline';
 import { useWallet } from '@/hooks/useWallet';
 import { useNotificationList } from '@/stores/notifications';
@@ -46,7 +46,7 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-gray-200 dark:border-dark-700 bg-white/80 dark:bg-dark-900/80 backdrop-blur-lg">
+    <header className="sticky top-0 z-50 w-full border-b border-gray-200 bg-white/80 backdrop-blur-lg dark:border-dark-700 dark:bg-dark-900/80">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
@@ -56,17 +56,17 @@ export function Header() {
               whileTap={{ scale: 0.95 }}
               className="flex items-center space-x-2"
             >
-              <div className="w-8 h-8 bg-gradient-to-br from-brand-500 to-purple-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">D</span>
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-brand-500 to-purple-600">
+                <span className="text-lg font-bold text-white">D</span>
               </div>
-              <span className="font-bold text-xl gradient-text hidden sm:block">
+              <span className="gradient-text hidden text-xl font-bold sm:block">
                 DeFi Portfolio
               </span>
             </motion.div>
 
             {/* Desktop Navigation */}
-            <nav className="hidden md:flex space-x-1">
-              {navigation.map((item) => {
+            <nav className="hidden space-x-1 md:flex">
+              {navigation.map(item => {
                 const Icon = item.icon;
                 return (
                   <motion.a
@@ -74,9 +74,9 @@ export function Header() {
                     href={item.href}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className="flex items-center space-x-2 px-3 py-2 rounded-lg text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-dark-800 transition-all duration-200"
+                    className="flex items-center space-x-2 rounded-lg px-3 py-2 text-gray-600 transition-all duration-200 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-dark-800 dark:hover:text-white"
                   >
-                    <Icon className="w-4 h-4" />
+                    <Icon className="h-4 w-4" />
                     <span className="text-sm font-medium">{item.name}</span>
                   </motion.a>
                 );
@@ -90,14 +90,14 @@ export function Header() {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="relative p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-dark-800 transition-all duration-200"
+              className="relative rounded-lg p-2 text-gray-600 transition-all duration-200 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-dark-800 dark:hover:text-white"
             >
-              <BellIcon className="w-5 h-5" />
+              <BellIcon className="h-5 w-5" />
               {hasUnread && (
                 <motion.span
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center"
+                  className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white"
                 >
                   {unreadCount > 9 ? '9+' : unreadCount}
                 </motion.span>
@@ -109,12 +109,12 @@ export function Header() {
               onClick={toggleTheme}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-dark-800 transition-all duration-200"
+              className="rounded-lg p-2 text-gray-600 transition-all duration-200 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-dark-800 dark:hover:text-white"
             >
               {theme === 'dark' ? (
-                <SunIcon className="w-5 h-5" />
+                <SunIcon className="h-5 w-5" />
               ) : (
-                <MoonIcon className="w-5 h-5" />
+                <MoonIcon className="h-5 w-5" />
               )}
             </motion.button>
 
@@ -136,8 +136,8 @@ export function Header() {
             {/* Mobile Wallet (simplified) */}
             <div className="sm:hidden">
               {isConnected ? (
-                <div className="flex items-center space-x-2 px-3 py-2 bg-green-100 dark:bg-green-900 rounded-lg">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <div className="flex items-center space-x-2 rounded-lg bg-green-100 px-3 py-2 dark:bg-green-900">
+                  <div className="h-2 w-2 rounded-full bg-green-500"></div>
                   <span className="text-sm font-medium text-green-700 dark:text-green-300">
                     {formatAddress(address!)}
                   </span>
@@ -152,12 +152,12 @@ export function Header() {
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="md:hidden p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-dark-800 transition-all duration-200"
+              className="rounded-lg p-2 text-gray-600 transition-all duration-200 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-dark-800 dark:hover:text-white md:hidden"
             >
               {isMobileMenuOpen ? (
-                <XMarkIcon className="w-5 h-5" />
+                <XMarkIcon className="h-5 w-5" />
               ) : (
-                <Bars3Icon className="w-5 h-5" />
+                <Bars3Icon className="h-5 w-5" />
               )}
             </motion.button>
           </div>
@@ -171,10 +171,10 @@ export function Header() {
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.2 }}
-              className="md:hidden border-t border-gray-200 dark:border-dark-700 py-4"
+              className="border-t border-gray-200 py-4 dark:border-dark-700 md:hidden"
             >
               <nav className="space-y-1">
-                {navigation.map((item) => {
+                {navigation.map(item => {
                   const Icon = item.icon;
                   return (
                     <motion.a
@@ -182,9 +182,9 @@ export function Header() {
                       href={item.href}
                       onClick={() => setIsMobileMenuOpen(false)}
                       whileHover={{ x: 4 }}
-                      className="flex items-center space-x-3 px-3 py-3 rounded-lg text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-dark-800 transition-all duration-200"
+                      className="flex items-center space-x-3 rounded-lg px-3 py-3 text-gray-600 transition-all duration-200 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-dark-800 dark:hover:text-white"
                     >
-                      <Icon className="w-5 h-5" />
+                      <Icon className="h-5 w-5" />
                       <span className="font-medium">{item.name}</span>
                     </motion.a>
                   );
@@ -193,9 +193,11 @@ export function Header() {
 
               {/* Mobile Wallet Details */}
               {isConnected && (
-                <div className="mt-4 pt-4 border-t border-gray-200 dark:border-dark-700">
+                <div className="mt-4 border-t border-gray-200 pt-4 dark:border-dark-700">
                   <div className="px-3 py-2">
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Connected Wallet</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Connected Wallet
+                    </p>
                     <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                       {formatAddress(address!)}
                     </p>
@@ -216,18 +218,18 @@ export function Header() {
 
 export function HeaderSkeleton() {
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-gray-200 dark:border-dark-700 bg-white/80 dark:bg-dark-900/80 backdrop-blur-lg">
+    <header className="sticky top-0 z-50 w-full border-b border-gray-200 bg-white/80 backdrop-blur-lg dark:border-dark-700 dark:bg-dark-900/80">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center space-x-4">
-            <div className="w-8 h-8 bg-gray-200 dark:bg-dark-700 rounded-lg animate-pulse"></div>
-            <div className="w-32 h-6 bg-gray-200 dark:bg-dark-700 rounded animate-pulse hidden sm:block"></div>
+            <div className="h-8 w-8 animate-pulse rounded-lg bg-gray-200 dark:bg-dark-700"></div>
+            <div className="hidden h-6 w-32 animate-pulse rounded bg-gray-200 dark:bg-dark-700 sm:block"></div>
           </div>
-          
+
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-gray-200 dark:bg-dark-700 rounded-lg animate-pulse"></div>
-            <div className="w-8 h-8 bg-gray-200 dark:bg-dark-700 rounded-lg animate-pulse"></div>
-            <div className="w-24 h-8 bg-gray-200 dark:bg-dark-700 rounded-lg animate-pulse"></div>
+            <div className="h-8 w-8 animate-pulse rounded-lg bg-gray-200 dark:bg-dark-700"></div>
+            <div className="h-8 w-8 animate-pulse rounded-lg bg-gray-200 dark:bg-dark-700"></div>
+            <div className="h-8 w-24 animate-pulse rounded-lg bg-gray-200 dark:bg-dark-700"></div>
           </div>
         </div>
       </div>
@@ -249,12 +251,14 @@ export function NetworkStatus({ className }: NetworkStatusProps) {
   if (!isConnected || !chain) return null;
 
   return (
-    <div className={clsx(
-      'flex items-center space-x-2 px-2 py-1 rounded-md text-xs font-medium',
-      'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300',
-      className
-    )}>
-      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+    <div
+      className={clsx(
+        'flex items-center space-x-2 rounded-md px-2 py-1 text-xs font-medium',
+        'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
+        className
+      )}
+    >
+      <div className="h-2 w-2 rounded-full bg-green-500"></div>
       <span>{chain.name}</span>
     </div>
   );
