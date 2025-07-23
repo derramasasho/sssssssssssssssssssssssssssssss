@@ -1,149 +1,160 @@
 import numeral from 'numeral';
 import { format, formatDistanceToNow, isToday, isYesterday } from 'date-fns';
 
-// =============================================================================
-// NUMBER FORMATTING
-// =============================================================================
-
 /**
- * Format a number with appropriate precision and suffixes
+ * Format a number with specified decimal places and thousands separators
  */
 export function formatNumber(
-  value: number,
-  options: {
-    precision?: number;
-    compact?: boolean;
-    prefix?: string;
-    suffix?: string;
-  } = {}
+  value: number, 
+  decimals: number = 2, 
+  locale: string = 'en-US'
 ): string {
-  const { precision = 2, compact = false, prefix = '', suffix = '' } = options;
-
-  if (isNaN(value) || value === null || value === undefined) {
-    return '0';
-  }
-
-  let formatted: string;
-
-  if (compact) {
-    if (Math.abs(value) >= 1e9) {
-      formatted = numeral(value).format('0.0a').toUpperCase();
-    } else if (Math.abs(value) >= 1e6) {
-      formatted = numeral(value).format('0.0a').toUpperCase();
-    } else if (Math.abs(value) >= 1e3) {
-      formatted = numeral(value).format('0.0a').toUpperCase();
-    } else {
-      formatted = numeral(value).format(`0.${'0'.repeat(precision)}`);
-    }
-  } else {
-    formatted = numeral(value).format(`0,0.${'0'.repeat(precision)}`);
-  }
-
-  return `${prefix}${formatted}${suffix}`;
+  if (value === 0) return '0';
+  if (!value || isNaN(value)) return '0';
+  
+  return new Intl.NumberFormat(locale, {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: decimals,
+  }).format(value);
 }
 
 /**
- * Format a currency value with appropriate symbol and precision
+ * Format a number as currency
  */
 export function formatCurrency(
-  value: number,
-  options: {
-    currency?: string;
-    precision?: number;
-    compact?: boolean;
-    symbol?: boolean;
-  } = {}
+  value: number, 
+  currency: string = 'USD', 
+  locale: string = 'en-US'
 ): string {
-  const { currency = 'USD', precision = 2, compact = false, symbol = true } = options;
-
-  if (isNaN(value) || value === null || value === undefined) {
-    return symbol ? '$0' : '0';
-  }
-
-  const currencySymbols: Record<string, string> = {
-    USD: '$',
-    EUR: '€',
-    GBP: '£',
-    JPY: '¥',
-    ETH: 'Ξ',
-    BTC: '₿'
-  };
-
-  const currencySymbol = symbol ? (currencySymbols[currency] || '$') : '';
-
-  if (compact) {
-    if (Math.abs(value) >= 1e9) {
-      return `${currencySymbol}${numeral(value / 1e9).format('0.0')}B`;
-    } else if (Math.abs(value) >= 1e6) {
-      return `${currencySymbol}${numeral(value / 1e6).format('0.0')}M`;
-    } else if (Math.abs(value) >= 1e3) {
-      return `${currencySymbol}${numeral(value / 1e3).format('0.0')}K`;
-    }
-  }
-
-  if (Math.abs(value) < 0.01 && value !== 0) {
-    return `${currencySymbol}<0.01`;
-  }
-
-  return `${currencySymbol}${numeral(value).format(`0,0.${'0'.repeat(precision)}`)}`;
+  if (!value || isNaN(value)) return '$0.00';
+  
+  return new Intl.NumberFormat(locale, {
+    style: 'currency',
+    currency,
+  }).format(value);
 }
 
 /**
- * Format a percentage value
+ * Format a number as percentage
  */
 export function formatPercentage(
-  value: number,
-  options: {
-    precision?: number;
-    showSign?: boolean;
-    compact?: boolean;
-  } = {}
+  value: number, 
+  decimals: number = 2, 
+  locale: string = 'en-US'
 ): string {
-  const { precision = 2, showSign = true, compact = false } = options;
-
-  if (isNaN(value) || value === null || value === undefined) {
-    return '0%';
-  }
-
-  const sign = showSign && value > 0 ? '+' : '';
+  if (!value || isNaN(value)) return '0%';
   
-  if (compact && Math.abs(value) >= 100) {
-    return `${sign}${numeral(value).format('0.0')}%`;
-  }
-
-  return `${sign}${numeral(value).format(`0.${'0'.repeat(precision)}`)}%`;
+  return new Intl.NumberFormat(locale, {
+    style: 'percent',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: decimals,
+  }).format(value / 100);
 }
 
 /**
- * Format a token amount with appropriate precision
+ * Format large numbers with K, M, B suffixes
+ */
+export function formatCompactNumber(
+  value: number, 
+  locale: string = 'en-US'
+): string {
+  if (!value || isNaN(value)) return '0';
+  
+  return new Intl.NumberFormat(locale, {
+    notation: 'compact',
+    maximumFractionDigits: 2,
+  }).format(value);
+}
+
+/**
+ * Format token amount with appropriate decimal places
  */
 export function formatTokenAmount(
-  amount: string | number,
-  decimals: number = 18,
-  options: {
-    precision?: number;
-    compact?: boolean;
-    symbol?: string;
-  } = {}
+  value: number, 
+  decimals: number = 6, 
+  symbol?: string
 ): string {
-  const { precision = 4, compact = false, symbol = '' } = options;
-
-  const numericAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+  if (!value || isNaN(value)) return symbol ? `0 ${symbol}` : '0';
   
-  if (isNaN(numericAmount) || numericAmount === 0) {
-    return `0${symbol ? ` ${symbol}` : ''}`;
-  }
+  const formatted = formatNumber(value, decimals);
+  return symbol ? `${formatted} ${symbol}` : formatted;
+}
 
-  // Adjust precision based on amount size
-  let adjustedPrecision = precision;
-  if (numericAmount < 1) {
-    adjustedPrecision = Math.max(precision, 6);
-  } else if (numericAmount < 0.001) {
-    adjustedPrecision = 8;
-  }
+/**
+ * Format address for display (truncated)
+ */
+export function formatAddress(
+  address: string, 
+  startChars: number = 6, 
+  endChars: number = 4
+): string {
+  if (!address) return '';
+  if (address.length <= startChars + endChars) return address;
+  
+  return `${address.slice(0, startChars)}...${address.slice(-endChars)}`;
+}
 
-  const formatted = formatNumber(numericAmount, { precision: adjustedPrecision, compact });
-  return `${formatted}${symbol ? ` ${symbol}` : ''}`;
+/**
+ * Format time ago (e.g., "2 hours ago")
+ */
+export function formatTimeAgo(date: Date): string {
+  const now = new Date();
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+  
+  if (diffInSeconds < 60) {
+    return 'just now';
+  }
+  
+  const diffInMinutes = Math.floor(diffInSeconds / 60);
+  if (diffInMinutes < 60) {
+    return `${diffInMinutes} minute${diffInMinutes === 1 ? '' : 's'} ago`;
+  }
+  
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  if (diffInHours < 24) {
+    return `${diffInHours} hour${diffInHours === 1 ? '' : 's'} ago`;
+  }
+  
+  const diffInDays = Math.floor(diffInHours / 24);
+  if (diffInDays < 30) {
+    return `${diffInDays} day${diffInDays === 1 ? '' : 's'} ago`;
+  }
+  
+  const diffInMonths = Math.floor(diffInDays / 30);
+  return `${diffInMonths} month${diffInMonths === 1 ? '' : 's'} ago`;
+}
+
+/**
+ * Format price change with appropriate color classes
+ */
+export function formatPriceChange(
+  value: number, 
+  type: 'percentage' | 'currency' = 'percentage'
+): {
+  formatted: string;
+  isPositive: boolean;
+  isNegative: boolean;
+  colorClass: string;
+} {
+  const isPositive = value > 0;
+  const isNegative = value < 0;
+  
+  const formatted = type === 'percentage' 
+    ? formatPercentage(Math.abs(value))
+    : formatCurrency(Math.abs(value));
+  
+  const sign = isPositive ? '+' : isNegative ? '-' : '';
+  
+  return {
+    formatted: `${sign}${formatted}`,
+    isPositive,
+    isNegative,
+    colorClass: isPositive 
+      ? 'text-green-600 dark:text-green-400' 
+      : isNegative 
+        ? 'text-red-600 dark:text-red-400' 
+        : 'text-muted-foreground'
+  };
 }
 
 /**
@@ -163,29 +174,6 @@ export function formatGasLimit(gasLimit: string | number): string {
   return formatNumber(gasLimitNum, { compact: true });
 }
 
-// =============================================================================
-// ADDRESS FORMATTING
-// =============================================================================
-
-/**
- * Truncate an Ethereum address for display
- */
-export function formatAddress(
-  address: string,
-  options: {
-    length?: number;
-    separator?: string;
-  } = {}
-): string {
-  const { length = 4, separator = '...' } = options;
-
-  if (!address || address.length < 10) {
-    return address;
-  }
-
-  return `${address.slice(0, length + 2)}${separator}${address.slice(-length)}`;
-}
-
 /**
  * Format ENS name or address
  */
@@ -195,10 +183,6 @@ export function formatIdentity(address: string, ensName?: string): string {
   }
   return formatAddress(address);
 }
-
-// =============================================================================
-// DATE FORMATTING
-// =============================================================================
 
 /**
  * Format a date for display
@@ -260,62 +244,6 @@ export function formatDuration(seconds: number): string {
   }
 }
 
-// =============================================================================
-// PRICE CHANGE FORMATTING
-// =============================================================================
-
-/**
- * Format price change with appropriate color and sign
- */
-export function formatPriceChange(
-  change: number,
-  options: {
-    isPercentage?: boolean;
-    precision?: number;
-  } = {}
-): {
-  formatted: string;
-  isPositive: boolean;
-  isNegative: boolean;
-  className: string;
-} {
-  const { isPercentage = false, precision = 2 } = options;
-
-  const isPositive = change > 0;
-  const isNegative = change < 0;
-  const isNeutral = change === 0;
-
-  let formatted: string;
-  if (isPercentage) {
-    formatted = formatPercentage(change, { precision, showSign: true });
-  } else {
-    formatted = formatCurrency(change, { precision });
-    if (change > 0) {
-      formatted = `+${formatted}`;
-    }
-  }
-
-  let className = '';
-  if (isPositive) {
-    className = 'number-positive';
-  } else if (isNegative) {
-    className = 'number-negative';
-  } else {
-    className = 'text-gray-500';
-  }
-
-  return {
-    formatted,
-    isPositive,
-    isNegative,
-    className
-  };
-}
-
-// =============================================================================
-// SIZE FORMATTING
-// =============================================================================
-
 /**
  * Format file size in bytes to human readable format
  */
@@ -328,10 +256,6 @@ export function formatFileSize(bytes: number): string {
 
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
 }
-
-// =============================================================================
-// VALIDATION HELPERS
-// =============================================================================
 
 /**
  * Check if a value is a valid number
@@ -351,10 +275,6 @@ export function parseFormattedNumber(value: string): number {
   const cleaned = value.replace(/[,$%\s]/g, '');
   return parseFloat(cleaned) || 0;
 }
-
-// =============================================================================
-// CHART FORMATTING
-// =============================================================================
 
 /**
  * Format tick values for charts

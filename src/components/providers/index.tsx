@@ -10,6 +10,7 @@ import { TradingProvider } from '@/stores/trading';
 import { NotificationProvider } from '@/stores/notifications';
 import { SettingsProvider } from '@/stores/settings';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import SolanaProvider from './SolanaProvider';
 
 // Import RainbowKit styles
 import '@rainbow-me/rainbowkit/styles.css';
@@ -200,7 +201,8 @@ export function Providers({ children }: ProvidersProps) {
               modalSize="compact"
               coolMode
             >
-              <SettingsProvider>
+              <SolanaProvider>
+                <SettingsProvider>
                 <NotificationProvider>
                   <PortfolioProvider>
                     <TradingProvider>
@@ -215,6 +217,7 @@ export function Providers({ children }: ProvidersProps) {
                   </PortfolioProvider>
                 </NotificationProvider>
               </SettingsProvider>
+            </SolanaProvider>
             </RainbowKitProvider>
           </WagmiConfig>
         </QueryClientProvider>
