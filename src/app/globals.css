@@ -56,136 +56,306 @@
   * {
     @apply border-border;
   }
-
   body {
     @apply bg-background text-foreground;
-    font-feature-settings:
-      'rlig' 1,
-      'calt' 1;
-  }
-
-  html {
-    scroll-behavior: smooth;
   }
 }
 
-@layer components {
-  /* Glass morphism effects */
-  .glass {
-    @apply border border-white/20 bg-white/10 backdrop-blur-lg;
+/* =============================================================================
+ * CUSTOM ANIMATIONS
+ * ============================================================================= */
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
   }
-
-  .glass-dark {
-    @apply border border-white/10 bg-black/10 backdrop-blur-lg;
-  }
-
-  /* Custom scrollbar */
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-track {
-    @apply rounded-full bg-gray-100 dark:bg-dark-800;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    @apply rounded-full bg-gray-300 hover:bg-gray-400 dark:bg-dark-600 dark:hover:bg-dark-500;
-  }
-
-  /* Button variants */
-  .btn-primary {
-    @apply rounded-xl bg-gradient-to-r from-brand-500 to-brand-600 px-6 py-3 font-medium text-white shadow-lg transition-all duration-200 hover:scale-105 hover:from-brand-600 hover:to-brand-700 hover:shadow-xl active:scale-95;
-  }
-
-  .btn-secondary {
-    @apply rounded-xl border border-gray-200 bg-gray-100 px-6 py-3 font-medium text-gray-900 transition-all duration-200 hover:bg-gray-200 dark:border-dark-700 dark:bg-dark-800 dark:text-gray-100 dark:hover:bg-dark-700;
-  }
-
-  .btn-outline {
-    @apply rounded-xl border border-brand-500 px-6 py-3 font-medium text-brand-500 transition-all duration-200 hover:bg-brand-500 hover:text-white;
-  }
-
-  /* Card variants */
-  .card {
-    @apply rounded-2xl border border-gray-200 bg-white p-6 shadow-lg transition-all duration-200 dark:border-dark-700 dark:bg-dark-800;
-  }
-
-  .card-hover {
-    @apply card cursor-pointer hover:scale-105 hover:shadow-xl;
-  }
-
-  /* Input variants */
-  .input-primary {
-    @apply w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-gray-900 placeholder-gray-500 transition-all duration-200 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-brand-500 dark:border-dark-700 dark:bg-dark-800 dark:text-gray-100 dark:placeholder-gray-400;
-  }
-
-  /* Loading animations */
-  .pulse-glow {
-    animation: pulse-glow 2s infinite;
-  }
-
-  @keyframes pulse-glow {
-    0%,
-    100% {
-      box-shadow: 0 0 5px rgba(59, 130, 246, 0.5);
-    }
-    50% {
-      box-shadow: 0 0 20px rgba(59, 130, 246, 0.8);
-    }
-  }
-
-  /* Gradient text */
-  .gradient-text {
-    @apply bg-gradient-to-r from-brand-500 to-purple-600 bg-clip-text text-transparent;
-  }
-
-  /* Number formatting */
-  .number-positive {
-    @apply dark:text-success-400 text-success-600;
-  }
-
-  .number-negative {
-    @apply dark:text-danger-400 text-danger-600;
-  }
-
-  /* Chart styles */
-  .chart-tooltip {
-    @apply rounded-lg border border-gray-200 bg-white p-3 text-sm shadow-lg dark:border-dark-700 dark:bg-dark-800;
-  }
-
-  /* Mobile optimizations */
-  @media (max-width: 640px) {
-    .mobile-padding {
-      @apply px-4;
-    }
-
-    .mobile-text {
-      @apply text-sm;
-    }
+  100% {
+    background-position: 200% 0;
   }
 }
 
-@layer utilities {
-  /* Hide scrollbar but keep functionality */
-  .scrollbar-hide {
-    -ms-overflow-style: none;
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse-slow {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes bounce-subtle {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+/* =============================================================================
+ * UTILITY CLASSES
+ * ============================================================================= */
+
+.animate-shimmer {
+  animation: shimmer 2s infinite linear;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out;
+}
+
+.animate-slide-in {
+  animation: slideIn 0.3s ease-out;
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 3s infinite;
+}
+
+.animate-bounce-subtle {
+  animation: bounce-subtle 2s infinite;
+}
+
+/* =============================================================================
+ * SCROLLBAR STYLING
+ * ============================================================================= */
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
+}
+
+/* =============================================================================
+ * GRADIENTS AND EFFECTS
+ * ============================================================================= */
+
+.gradient-text {
+  @apply bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent;
+}
+
+.gradient-border {
+  background:
+    linear-gradient(hsl(var(--background)), hsl(var(--background))) padding-box,
+    linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.3))
+      border-box;
+  border: 1px solid transparent;
+  border-radius: 8px;
+}
+
+.glass-effect {
+  backdrop-filter: blur(10px);
+  background: hsl(var(--background) / 0.8);
+  border: 1px solid hsl(var(--border) / 0.5);
+}
+
+.glow-effect {
+  box-shadow: 0 0 20px hsl(var(--primary) / 0.3);
+}
+
+/* =============================================================================
+ * RESPONSIVE UTILITIES
+ * ============================================================================= */
+
+.container-fluid {
+  width: 100%;
+  max-width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+@media (min-width: 640px) {
+  .container-fluid {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container-fluid {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+/* =============================================================================
+ * ACCESSIBILITY IMPROVEMENTS
+ * ============================================================================= */
+
+.focus-visible {
+  @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-background;
+}
+
+.reduced-motion {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* =============================================================================
+ * PRINT STYLES
+ * ============================================================================= */
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  .bg-card {
+    background: white !important;
+    border: 1px solid #ccc !important;
+  }
+}
+
+/* =============================================================================
+ * PERFORMANCE OPTIMIZATIONS
+ * ============================================================================= */
+
+.will-change-transform {
+  will-change: transform;
+}
+
+.will-change-auto {
+  will-change: auto;
+}
+
+.gpu-accelerated {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* =============================================================================
+ * COMPONENT-SPECIFIC STYLES
+ * ============================================================================= */
+
+.trading-panel {
+  position: relative;
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.portfolio-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.status-indicator {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.status-indicator::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: pulse-slow 2s infinite;
+}
+
+/* =============================================================================
+ * DARK MODE TRANSITIONS
+ * ============================================================================= */
+
+* {
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+/* =============================================================================
+ * LOADING STATES
+ * ============================================================================= */
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--muted)) 25%,
+    hsl(var(--muted) / 0.5) 50%,
+    hsl(var(--muted)) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite linear;
+  border-radius: 4px;
+}
+
+/* =============================================================================
+ * MOBILE OPTIMIZATIONS
+ * ============================================================================= */
+
+@media (max-width: 640px) {
+  .mobile-scroll {
+    overflow-x: auto;
     scrollbar-width: none;
+    -ms-overflow-style: none;
   }
 
-  .scrollbar-hide::-webkit-scrollbar {
+  .mobile-scroll::-webkit-scrollbar {
     display: none;
   }
 
-  /* Text selection */
-  .select-none {
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
+  .mobile-padding {
+    padding-left: 1rem;
+    padding-right: 1rem;
   }
 
-  /* Focus visible */
-  .focus-visible-ring {
-    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-dark-900;
+  .mobile-text {
+    font-size: 0.875rem;
   }
 }
