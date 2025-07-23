@@ -1,0 +1,29 @@
+{
+  "name": "defi-fullstack",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@8.7.4",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev --parallel",
+    "build": "turbo run build",
+    "start": "turbo run start",
+    "type-check": "turbo run type-check",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "e2e": "turbo run e2e",
+    "postinstall": "husky install"
+  },
+  "devDependencies": {
+    "turbo": "^1.10.3",
+    "husky": "^8.0.3",
+    "lint-staged": "^14.0.1",
+    "eslint": "^8.57.0",
+    "prettier": "^3.2.5",
+    "@commitlint/cli": "^18.4.3",
+    "@commitlint/config-conventional": "^18.4.3"
+  }
+}
